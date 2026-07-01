@@ -1,0 +1,20 @@
+﻿using System.Runtime.InteropServices;
+
+namespace ProZapCommunication.Infrastructure.Plc.Logix.Structures.StationData.Read;
+
+[StructLayout(LayoutKind.Sequential)]
+public class LogixStationReadBase
+{
+    public Int16 Life;
+    public UInt16 Task_Counter;
+    public Int16 Task_Send_To_PC;
+    public Int16 Task_Confirm_To_PC;
+    public UInt16 Task_Succes_Counter;
+    public Int16 Task_Status;
+    public LogixString DMC = new LogixString();
+    public Int16 Reserve1;
+    public Int16 Reserve2;
+    public Int16 Reserve3;
+    public Int16 Reserve4;
+    public Int16 Reserve5;
+}

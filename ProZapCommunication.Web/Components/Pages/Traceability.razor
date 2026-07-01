@@ -1,0 +1,343 @@
+﻿@page "/traceability"
+@using ProZapCommunication.Web.Database
+@using ProZapCommunication.Web.Models
+@using ProZapCommunication.Web.Services
+@inject ReportRepository Repository
+@inject ISnackbar Snackbar
+@inject ExportService ExportService
+@inject IJSRuntime JS
+
+<MudText Typo="Typo.h4" Class="mb-6">Traceability Report</MudText>
+
+<MudGrid Class="mb-6" Spacing="2">
+
+    <MudItem xs="12" md="3" lg="2">
+        <MudSelect @bind-Value="selectedSearchType" Label="Search By" Variant="Variant.Outlined">
+            <MudSelectItem Value="@("SN")">Serial Number (SN)</MudSelectItem>
+            <MudSelectItem Value="@("Radiator_SN")">Radiator SN</MudSelectItem>
+            <MudSelectItem Value="@("Mfs_SN")">Mfs SN</MudSelectItem>
+            <MudSelectItem Value="@("Motor_SN")">Motor SN</MudSelectItem>
+        </MudSelect>
+    </MudItem>
+
+    <MudItem xs="12" md="6" lg="4">
+        <MudTextField @bind-Value="searchSubSn"
+                      Label="Enter Value"
+                      Variant="Variant.Outlined"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      Immediate="true"
+                      OnKeyDown="HandleKeyPress" />
+    </MudItem>
+    <MudItem xs="12" md="6" lg="4" Class="d-flex align-center">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchData" Disabled="@isLoading" Size="Size.Large">
+            @if (isLoading)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
+            }
+            Search
+        </MudButton>
+    </MudItem>
+</MudGrid>
+
+@if (report != null)
+{
+    <MudCard Elevation="4" Class="mb-6">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">Main Product Card: <b>@report.SN</b></MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudGrid>
+                <MudItem xs="12" sm="4">
+                    <MudText Typo="Typo.body2">Linked Mfs SN:</MudText>
+                    <MudText Typo="Typo.body1"><b>@(string.IsNullOrEmpty(report.Mfs_SN) ? "No data" : report.Mfs_SN)</b></MudText>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudText Typo="Typo.body2">Linked Motor SN:</MudText>
+                    <MudText Typo="Typo.body1"><b>@(string.IsNullOrEmpty(report.Motor_SN) ? "No data" : report.Motor_SN)</b></MudText>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudText Typo="Typo.body2">Total Operations (Attempts):</MudText>
+                    <MudText Typo="Typo.body1"><b>@report.TotalAttempts</b></MudText>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+    <div class="mb-4">
+        <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Download"
+                   OnClick="DownloadExcel" Class="mr-2" Disabled="@(report == null)">Export to Excel</MudButton>
+               
+        <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Description"
+                   OnClick="DownloadCsv" Disabled="@(report == null)">Export to CSV</MudButton>
+    </div>
+
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" Color="Color.Dark">
+        
+        <MudTabPanel Text="Crfm Line (Stations 1-4)" Icon="@Icons.Material.Filled.PrecisionManufacturing">
+            
+            @if(report.Station1History.Any())
+            {
+                <MudText Typo="Typo.h6" Class="mb-2">Station 1 History (Screwing)</MudText>
+                <MudTable Items="@report.Station1History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
+                    <HeaderContent>
+                        <MudTh Style="width: 180px;">Timestamp</MudTh>
+                        <MudTh Style="width: 100px;">Status</MudTh>
+                        <MudTh Style="width: 120px;">Cycle Time</MudTh>
+                        <MudTh>Radiator SN</MudTh>
+                        <MudTh>Torque</MudTh>
+                        <MudTh>Angle</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Timestamp">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+                        <MudTd DataLabel="Status">
+                            <MudChip T="string" Color="@(context.SN_Status == 1 ? Color.Success : Color.Error)" Size="Size.Small">
+                                @(context.SN_Status == 1 ? "OK" : "NOK")
+                            </MudChip>
+                        </MudTd>
+                        <MudTd>@context.CycleTime [s]</MudTd>
+                        <MudTd DataLabel="Radiator SN">@context.Radiator_SN</MudTd>
+                        <MudTd DataLabel="Torque">@context.Torque</MudTd>
+                        <MudTd DataLabel="Angle">@context.Angle</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+
+            @if(report.Station2History.Any())
+            {
+                <MudText Typo="Typo.h6" Class="mb-2">Station 2 History (Leak Test & Mating)</MudText>
+                <MudTable Items="@report.Station2History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
+                    <HeaderContent>
+                        <MudTh Style="width: 180px;">Timestamp</MudTh>
+                        <MudTh Style="width: 100px;">Status</MudTh>
+                        <MudTh Style="width: 120px;">Cycle Time</MudTh>
+                        <MudTh>Pressure</MudTh>
+                        <MudTh>Test Time [s]</MudTh>
+                        <MudTh>Leak</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Timestamp">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+                        <MudTd DataLabel="Status">
+                            <MudChip T="string" Color="@(context.SN_Status == 1 ? Color.Success : Color.Error)" Size="Size.Small">
+                                @(context.SN_Status == 1 ? "OK" : "NOK")
+                            </MudChip>
+                        </MudTd>
+                        <MudTd>@context.CycleTime [s]</MudTd>
+                        <MudTd DataLabel="Mfs SN">@context.Mfs_SN</MudTd>
+                        <MudTd DataLabel="Pressure">@context.Preasure</MudTd> 
+                        <MudTd DataLabel="Test Time">@context.TestTime</MudTd>
+                        <MudTd DataLabel="Leak">@context.Leak</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+
+            @if(report.Station3History.Any())
+            {
+                <MudText Typo="Typo.h6" Class="mb-2">Station 3 History (Vision System)</MudText>
+                <MudTable Items="@report.Station3History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
+                    <HeaderContent>
+                        <MudTh Style="width: 180px;">Timestamp</MudTh>
+                        <MudTh Style="width: 100px;">Status</MudTh>
+                        <MudTh Style="width: 120px;">Cycle Time</MudTh>
+                        <MudTh>Vision 1 Status</MudTh>
+                        <MudTh>Vision 2 Status</MudTh>
+                        <MudTh>Vision 3 Status</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Timestamp">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+                        <MudTd DataLabel="Main Status">
+                            <MudChip T="string" Color="@(context.SN_Status == 1 ? Color.Success : Color.Error)" Size="Size.Small">
+                                @(context.SN_Status == 1 ? "OK" : "NOK")
+                            </MudChip>
+                        </MudTd>
+                        <MudTd>@context.CycleTime [s]</MudTd>
+                        <MudTd DataLabel="Vision 1">@(context.Vision1Status == 1 ? "Pass" : "Fail")</MudTd>
+                        <MudTd DataLabel="Vision 2">@(context.Vision2Status == 1 ? "Pass" : "Fail")</MudTd>
+                        <MudTd DataLabel="Vision 3">@(context.Vision3Status == 1 ? "Pass" : "Fail")</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+
+            @if(report.Station4History.Any())
+            {
+                <MudText Typo="Typo.h6" Class="mb-2">Station 4 History (Gluing & Weight)</MudText>
+                <MudTable Items="@report.Station4History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
+                    <HeaderContent>
+                        <MudTh Style="width: 180px;">Timestamp</MudTh>
+                        <MudTh Style="width: 100px;">Status</MudTh>
+                        <MudTh Style="width: 120px;">Cycle Time</MudTh>
+                        <MudTh>Temperature</MudTh>
+                        <MudTh>Glue Type</MudTh>
+                        <MudTh>Weight</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Timestamp">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+                        <MudTd DataLabel="Status">
+                            <MudChip T="string" Color="@(context.SN_Status == 1 ? Color.Success : Color.Error)" Size="Size.Small">
+                                @(context.SN_Status == 1 ? "OK" : "NOK")
+                            </MudChip>
+                        </MudTd>
+                        <MudTd>@context.CycleTime [s]</MudTd>
+                        <MudTd DataLabel="Temperature">@context.Temperature</MudTd>
+                        <MudTd DataLabel="Glue Type">@context.GlueTupe</MudTd>
+                        <MudTd DataLabel="Weight">@context.Weight</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+
+        </MudTabPanel>
+
+        <MudTabPanel Text="Mfs-assembly (Stations 5-7)" Icon="@Icons.Material.Filled.Settings" Disabled="@(string.IsNullOrEmpty(report.Motor_SN))">
+            
+            @if(report.Station5History.Any())
+            {
+                <MudText Typo="Typo.h6" Class="mb-2">Station 5 History</MudText>
+                <MudTable Items="@report.Station5History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
+                    <HeaderContent>
+                        <MudTh Style="width: 180px;">Timestamp</MudTh>
+                        <MudTh Style="width: 100px;">Status</MudTh>
+                        <MudTh Style="width: 120px;">Cycle Time</MudTh>
+                        <MudTh>Motor SN</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Timestamp">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+                        <MudTd DataLabel="Status">
+                            <MudChip T="string" Color="@(context.Motor_Status == 1 ? Color.Success : Color.Error)" Size="Size.Small">
+                                @(context.Motor_Status == 1 ? "OK" : "NOK")
+                            </MudChip>
+                        </MudTd>
+                        <MudTd>@context.CycleTime [s]</MudTd>
+                        <MudTd DataLabel="Motor SN">@context.Motor_SN</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+
+            @if(report.Station6History.Any())
+            {
+                <MudText Typo="Typo.h6" Class="mb-2">Station 6 History</MudText>
+                <MudTable Items="@report.Station6History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
+                    <HeaderContent>
+                        <MudTh Style="width: 180px;">Timestamp</MudTh>
+                        <MudTh Style="width: 100px;">Status</MudTh>
+                        <MudTh Style="width: 120px;">Cycle Time</MudTh>
+                        <MudTh>Motor SN</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Timestamp">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+                        <MudTd DataLabel="Status">
+                            <MudChip T="string" Color="@(context.Motor_Status == 1 ? Color.Success : Color.Error)" Size="Size.Small">
+                                @(context.Motor_Status == 1 ? "OK" : "NOK")
+                            </MudChip>
+                        </MudTd>
+                        <MudTd>@context.CycleTime [s]</MudTd>
+                        <MudTd DataLabel="Motor SN">@context.Motor_SN</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+
+            @if(report.Station7History.Any())
+            {
+                <MudText Typo="Typo.h6" Class="mb-2">Station 7 History (Mfs SN Assignment)</MudText>
+                <MudTable Items="@report.Station7History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
+                    <HeaderContent>
+                        <MudTh Style="width: 180px;">Timestamp</MudTh>
+                        <MudTh Style="width: 100px;">Status</MudTh>
+                        <MudTh Style="width: 120px;">Cycle Time</MudTh>
+                        <MudTh>Motor SN</MudTh>
+                        <MudTh>Mfs SN</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Timestamp">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+                        <MudTd DataLabel="Status">
+                            <MudChip T="string" Color="@(context.Motor_Status == 1 ? Color.Success : Color.Error)" Size="Size.Small">
+                                @(context.Motor_Status == 1 ? "OK" : "NOK")
+                            </MudChip>
+                        </MudTd>
+                        <MudTd>@context.CycleTime [s]</MudTd>
+                        <MudTd DataLabel="Motor SN">@context.Motor_SN</MudTd>
+                        <MudTd DataLabel="Mfs SN">@context.Mfs_SN</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+
+        </MudTabPanel>
+
+    </MudTabs>
+}
+
+@code {
+    private string selectedSearchType = "SN"; // Domyślnie szukamy po SN
+    private string searchSubSn = string.Empty;
+    private bool isLoading = false;
+    private ProductionProcessReport? report;
+
+    private async Task SearchData()
+    {
+        if (string.IsNullOrWhiteSpace(searchSubSn))
+        {
+            Snackbar.Add("Please enter a search value.", Severity.Warning);
+            return;
+        }
+
+        isLoading = true;
+        report = null;
+        StateHasChanged();
+
+        try
+        {
+            // Wywołanie nowej metody wyszukującej po dowolnym typie
+            report = await Repository.GetReportByAnyIdentifierAsync(selectedSearchType, searchSubSn);
+            
+            if (report == null || report.TotalAttempts == 0)
+            {
+                Snackbar.Add($"No product history found for {selectedSearchType}: {searchSubSn}", Severity.Info);
+                report = null;
+            }
+            else
+            {
+                Snackbar.Add("Data retrieved successfully.", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Database error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SearchData();
+        }
+    }
+
+    private async Task DownloadExcel()
+    {
+        if (report == null) return;
+
+        var fileBytes = ExportService.ExportToExcel(report);
+        var fileName = $"Traceability_{report.SN}.xlsx";
+
+        // Wywołujemy JavaScript, który pobierze plik w przeglądarce
+        await JS.InvokeVoidAsync("downloadFileFromBytes", fileName, Convert.ToBase64String(fileBytes));
+        Snackbar.Add("Excel file downloaded successfully.", Severity.Success);
+    }
+
+    private async Task DownloadCsv()
+    {
+        if (report == null) return;
+
+        var fileBytes = ExportService.ExportToCsv(report);
+        var fileName = $"Traceability_{report.SN}.csv";
+
+        await JS.InvokeVoidAsync("downloadFileFromBytes", fileName, Convert.ToBase64String(fileBytes));
+        Snackbar.Add("CSV file downloaded successfully.", Severity.Success);
+    }
+}

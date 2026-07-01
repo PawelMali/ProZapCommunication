@@ -1,0 +1,16 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="ProZapCommunication.Core/ProZapCommunication.Core.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
+  <Project Path="ProZapCommunication.Infrastructure/ProZapCommunication.Infrastructure.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
+  <Project Path="ProZapCommunication.UI/ProZapCommunication.UI.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
+  <Project Path="ProZapCommunication.Web/ProZapCommunication.Web.csproj" Id="d08184ec-d289-427b-8f3e-3c23a2c956e0" />
+</Solution>

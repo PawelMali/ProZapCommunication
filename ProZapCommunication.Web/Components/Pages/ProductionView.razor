@@ -1,0 +1,230 @@
+﻿@page "/production"
+@using ProZapCommunication.Web.Database
+@using ProZapCommunication.Web.Models
+@using ProZapCommunication.Web.Services
+@inject ReportRepository Repository
+@inject ExportService ExportService
+@inject IJSRuntime JS
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h4" Class="mb-6">Production Overview</MudText>
+
+<MudPaper Elevation="2" Class="pa-4 mb-6">
+    <MudGrid ContentAlignment="HorizontalAlignment.Center">
+        <MudItem xs="12" sm="4" md="3">
+            <MudDatePicker @bind-Date="dateFrom" Label="From Date" Editable="true" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" sm="4" md="3">
+            <MudDatePicker @bind-Date="dateTo" Label="To Date" Editable="true" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" sm="4" md="2">
+            <MudSelect @bind-Value="filterStatus" Label="Global Status" Variant="Variant.Outlined" Clearable="true">
+                <MudSelectItem Value="((int?)1)">OK Only</MudSelectItem>
+                <MudSelectItem Value="((int?)0)">NOK Only</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" sm="12" md="4" Class="d-flex align-center">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RefreshAllTabs"
+                       StartIcon="@Icons.Material.Filled.Refresh" Size="Size.Large" FullWidth="true" Disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Load Production Data
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+<div class="mb-4 d-flex gap-2">
+    <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Download"
+               OnClick="DownloadCurrentTabExcel" Size="Size.Medium">
+        Export Current View to Excel
+    </MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Description"
+               OnClick="DownloadCurrentTabCsv" Size="Size.Medium">
+        Export Current View to CSV
+    </MudButton>
+</div>
+
+<MudTabs @bind-ActivePanelIndex="activeTabIndex" Elevation="4" Rounded="true" Color="Color.Dark" ApplyEffectsToContainer="true" PanelClass="pa-4">
+    
+    <MudTabPanel Text="Station 1 (Screwing)" Icon="@Icons.Material.Filled.Build">
+        <MudDataGrid @ref="gridStation1" T="Station1Result" Items="@station1Data" Filterable="true" SortMode="SortMode.Multiple" QuickFilter="@QuickFilterStation1"
+                     PageSize="15" PagerVisible="true" Bordered="true" Dense="true" Hover="true">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Station 1 Logs</MudText>
+                <MudSpacer />
+                <MudTextField @bind-Value="searchString1" Placeholder="Quick Search (SN...)" Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true" />
+            </ToolBarContent>
+            <Columns>
+                <PropertyColumn Property="x => x.Timestamp" Title="Timestamp" Format="yyyy-MM-dd HH:mm:ss" />
+                <PropertyColumn Property="x => x.SN" Title="Serial Number" />
+                <PropertyColumn Property="x => x.CycleTime" Title="Cycle Time (ms)" />
+                <TemplateColumn Property="x => x.SN_Status" Title="Status">
+                    <CellTemplate>
+                        <MudChip Color="@(context.Item.SN_Status == 1 ? Color.Success : Color.Error)" Size="Size.Small">
+                            @(context.Item.SN_Status == 1 ? "OK" : "NOK")
+                        </MudChip>
+                    </CellTemplate>
+                </TemplateColumn>
+                <PropertyColumn Property="x => x.Radiator_SN" Title="Radiator SN" />
+                <PropertyColumn Property="x => x.Torque" Title="Torque (Nm)" />
+                <PropertyColumn Property="x => x.Angle" Title="Angle (°)" />
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="Station1Result" />
+            </PagerContent>
+        </MudDataGrid>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Station 2 (Leak Test)" Icon="@Icons.Material.Filled.Air">
+        <MudDataGrid @ref="gridStation2" T="Station2Result" Items="@station2Data" Filterable="true" SortMode="SortMode.Multiple" QuickFilter="@QuickFilterStation2"
+                     PageSize="15" PagerVisible="true" Bordered="true" Dense="true" Hover="true">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Station 2 Logs</MudText>
+                <MudSpacer />
+                <MudTextField @bind-Value="searchString2" Placeholder="Quick Search (SN...)" Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true" />
+            </ToolBarContent>
+            <Columns>
+                <PropertyColumn Property="x => x.Timestamp" Title="Timestamp" Format="yyyy-MM-dd HH:mm:ss" />
+                <PropertyColumn Property="x => x.SN" Title="Serial Number" />
+                <PropertyColumn Property="x => x.CycleTime" Title="Cycle Time (ms)" />
+                <TemplateColumn Property="x => x.SN_Status" Title="Status">
+                    <CellTemplate>
+                        <MudChip Color="@(context.Item.SN_Status == 1 ? Color.Success : Color.Error)" Size="Size.Small">
+                            @(context.Item.SN_Status == 1 ? "OK" : "NOK")
+                        </MudChip>
+                    </CellTemplate>
+                </TemplateColumn>
+                <PropertyColumn Property="x => x.Mfs_SN" Title="Mfs SN" />
+                <PropertyColumn Property="x => x.Preasure" Title="Pressure" />
+                <PropertyColumn Property="x => x.Leak" Title="Leak Rate" />
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="Station2Result" />
+            </PagerContent>
+        </MudDataGrid>
+    </MudTabPanel>
+
+</MudTabs>
+
+@code {
+    private DateTime? dateFrom = DateTime.Today.AddDays(-1);
+    private DateTime? dateTo = DateTime.Today.AddDays(1).AddSeconds(-1);
+    private int? filterStatus;
+    private bool isLoading = false;
+    private int activeTabIndex = 0; // Śledzi, który tab jest otwarty
+
+    // Referencje do obiektów gridów
+    private MudDataGrid<Station1Result>? gridStation1;
+    private MudDataGrid<Station2Result>? gridStation2;
+
+    private IEnumerable<Station1Result> station1Data = new List<Station1Result>();
+    private IEnumerable<Station2Result> station2Data = new List<Station2Result>();
+
+    private string searchString1 = string.Empty;
+    private string searchString2 = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task RefreshAllTabs() => await LoadData();
+
+    private async Task LoadData()
+    {
+        if (dateFrom == null || dateTo == null) return;
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var task1 = Repository.GetStationDataAsync<Station1Result>(1, dateFrom.Value, dateTo.Value, filterStatus);
+            var task2 = Repository.GetStationDataAsync<Station2Result>(2, dateFrom.Value, dateTo.Value, filterStatus);
+
+            await Task.WhenAll(task1, task2);
+
+            station1Data = await task1;
+            station2Data = await task2;
+
+            Snackbar.Add("Production logs updated successfully.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading production data: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    // ====================================================================
+    // METODY DLA DYNAMICZNEGO EKSPORTU Z FILTRAMI W LOCIE
+    // ====================================================================
+    
+    private async Task DownloadCurrentTabExcel()
+    {
+        byte[] fileBytes;
+        string fileName;
+
+        if (activeTabIndex == 0 && gridStation1 != null)
+        {
+            // Pobieramy TYLKO to co aktualnie odfiltrował użytkownik w gridzie stacji 1
+            var data = gridStation1.FilteredItems;
+            fileBytes = ExportService.ExportFilteredStationToExcel(data, "Station 1");
+            fileName = $"Production_Station1_{DateTime.Now:yyyyMMdd}.xlsx";
+        }
+        else if (activeTabIndex == 1 && gridStation2 != null)
+        {
+            var data = gridStation2.FilteredItems;
+            fileBytes = ExportService.ExportFilteredStationToExcel(data, "Station 2");
+            fileName = $"Production_Station2_{DateTime.Now:yyyyMMdd}.xlsx";
+        }
+        else return;
+
+        await JS.InvokeVoidAsync("downloadFileFromBytes", fileName, Convert.ToBase64String(fileBytes));
+        Snackbar.Add("Filtered view exported to Excel.", Severity.Success);
+    }
+
+    private async Task DownloadCurrentTabCsv()
+    {
+        byte[] fileBytes;
+        string fileName;
+
+        if (activeTabIndex == 0 && gridStation1 != null)
+        {
+            var data = gridStation1.FilteredItems;
+            fileBytes = ExportService.ExportFilteredStationToCsv(data);
+            fileName = $"Production_Station1_{DateTime.Now:yyyyMMdd}.csv";
+        }
+        else if (activeTabIndex == 1 && gridStation2 != null)
+        {
+            var data = gridStation2.FilteredItems;
+            fileBytes = ExportService.ExportFilteredStationToCsv(data);
+            fileName = $"Production_Station2_{DateTime.Now:yyyyMMdd}.csv";
+        }
+        else return;
+
+        await JS.InvokeVoidAsync("downloadFileFromBytes", fileName, Convert.ToBase64String(fileBytes));
+        Snackbar.Add("Filtered view exported to CSV.", Severity.Success);
+    }
+
+    private bool QuickFilterStation1(Station1Result item) => FilterResult(item, searchString1, item.SN, item.Radiator_SN);
+    private bool QuickFilterStation2(Station2Result item) => FilterResult(item, searchString2, item.SN, item.Mfs_SN);
+
+    private bool FilterResult(object item, string searchString, params string[] fieldsToSearch)
+    {
+        if (string.IsNullOrWhiteSpace(searchString)) return true;
+        foreach (var field in fieldsToSearch)
+        {
+            if (!string.IsNullOrEmpty(field) && field.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
+    }
+}

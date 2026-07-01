@@ -1,0 +1,50 @@
+﻿<UserControl x:Class="ProZapCommunication.UI.Views.Station1View"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:viewModels="clr-namespace:ProZapCommunication.UI.ViewModels"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800"
+             d:DataContext="{d:DesignInstance Type=viewModels:Station1ViewModel}">
+    
+    <materialDesign:Card Width="310" Height="220" Margin="10" Padding="15" UniformCornerRadius="8" Effect="{DynamicResource MaterialDesignShadowDepth1}">
+        <Grid>
+            <StackPanel>
+                <TextBlock Text="{Binding StationName}" Style="{StaticResource MaterialDesignSubtitle1TextBlock}" FontWeight="Bold" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+
+                <TextBlock Text="{Binding ConnectionStatusText}" Margin="0,2,0,5" FontWeight="SemiBold">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="Red"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                    <Setter Property="Foreground" Value="Green"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <TextBlock Text="Moment obrotowy: " FontWeight="Light"/>
+                    <TextBlock Text="{Binding Torque, StringFormat={}{0:F2} Nm}" FontWeight="Bold"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <TextBlock Text="Kąt dokręcania: " FontWeight="Light"/>
+                    <TextBlock Text="{Binding Angle, StringFormat={}{0:F0}°}"/>
+                </StackPanel>
+
+                <TextBlock Text="{Binding StatusText}" FontWeight="Bold" Margin="0,5,0,0" Foreground="{DynamicResource SecondaryHueMidBrush}"/>
+            </StackPanel>
+
+            <Button Style="{StaticResource MaterialDesignRaisedLightButton}" 
+                    Content="FIFO" 
+                    Command="{Binding SendTestTaskCommand}" 
+                    VerticalAlignment="Bottom" 
+                    HorizontalAlignment="Right"/>
+        </Grid>
+    </materialDesign:Card>
+</UserControl>
