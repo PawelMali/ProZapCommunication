@@ -90,7 +90,7 @@ public class Bootstrapper
                             ConfigureStation7(plcCfg, stationCfg, plcProvider, dbRepository);
                             break;
                         case "rework":
-                        //    ConfigureStation8(plcCfg, stationCfg, plcProvider, dbRepository);
+                            ConfigureStation8(plcCfg, stationCfg, plcProvider, dbRepository);
                             break;
 
                         default:
@@ -128,6 +128,13 @@ public class Bootstrapper
         var scheduler = new StationScheduler(cfg.StationId, plc);
         var processor = new Station1Processor(cfg.StationId, db, plc, stationIdentity, tagResults);
         var viewModel = new Station1ViewModel(cfg.StationId, cfg.Name, scheduler, processor);
+
+        // Konfiguracja systemu wizyjnego, jeśli ścieżki są podane w konfiguracji
+        if (!string.IsNullOrWhiteSpace(cfg.VisionSourcePath) && !string.IsNullOrWhiteSpace(cfg.VisionDestinationPath))
+        {
+            // To wywołanie zasili ścieżkę w procesorze, z której pobierzemy literę dysku w Task 9
+            processor.ConfigureVisionSystem(cfg.VisionSourcePath, cfg.VisionDestinationPath);
+        }
 
         // STOPIEŃ 1 (Szybka pętla cykliczna 50ms): Jeden czysty, funkcyjny blok odczytu i zapisu!
         scheduler.Level1FastJobs.Add(new PlcJob("Szybki_Handshake", () =>
@@ -167,6 +174,13 @@ public class Bootstrapper
         var processor = new Station2Processor(cfg.StationId, db, plc, stationIdentity, tagResults);
         var viewModel = new Station2ViewModel(cfg.StationId, cfg.Name, scheduler, processor);
 
+        // Konfiguracja systemu wizyjnego, jeśli ścieżki są podane w konfiguracji
+        if (!string.IsNullOrWhiteSpace(cfg.VisionSourcePath) && !string.IsNullOrWhiteSpace(cfg.VisionDestinationPath))
+        {
+            // To wywołanie zasili ścieżkę w procesorze, z której pobierzemy literę dysku w Task 9
+            processor.ConfigureVisionSystem(cfg.VisionSourcePath, cfg.VisionDestinationPath);
+        }
+
         // STOPIEŃ 1 (Szybka pętla cykliczna 50ms): Jeden czysty, funkcyjny blok odczytu i zapisu!
         scheduler.Level1FastJobs.Add(new PlcJob("Szybki_Handshake", () =>
         {
@@ -204,6 +218,13 @@ public class Bootstrapper
         var scheduler = new StationScheduler(cfg.StationId, plc);
         var processor = new Station3Processor(cfg.StationId, db, plc, stationIdentity, tagResults);
         var viewModel = new Station3ViewModel(cfg.StationId, cfg.Name, scheduler, processor);
+
+        // Konfiguracja systemu wizyjnego, jeśli ścieżki są podane w konfiguracji
+        if (!string.IsNullOrWhiteSpace(cfg.VisionSourcePath) && !string.IsNullOrWhiteSpace(cfg.VisionDestinationPath))
+        {
+            // To wywołanie zasili ścieżkę w procesorze, z której pobierzemy literę dysku w Task 9
+            processor.ConfigureVisionSystem(cfg.VisionSourcePath, cfg.VisionDestinationPath);
+        }
 
         // STOPIEŃ 1 (Szybka pętla cykliczna 50ms): Jeden czysty, funkcyjny blok odczytu i zapisu!
         scheduler.Level1FastJobs.Add(new PlcJob("Szybki_Handshake", () =>
@@ -243,6 +264,13 @@ public class Bootstrapper
         var processor = new Station4Processor(cfg.StationId, db, plc, stationIdentity, tagResults);
         var viewModel = new Station4ViewModel(cfg.StationId, cfg.Name, scheduler, processor);
 
+        // Konfiguracja systemu wizyjnego, jeśli ścieżki są podane w konfiguracji
+        if (!string.IsNullOrWhiteSpace(cfg.VisionSourcePath) && !string.IsNullOrWhiteSpace(cfg.VisionDestinationPath))
+        {
+            // To wywołanie zasili ścieżkę w procesorze, z której pobierzemy literę dysku w Task 9
+            processor.ConfigureVisionSystem(cfg.VisionSourcePath, cfg.VisionDestinationPath);
+        }
+
         // STOPIEŃ 1 (Szybka pętla cykliczna 50ms): Jeden czysty, funkcyjny blok odczytu i zapisu!
         scheduler.Level1FastJobs.Add(new PlcJob("Szybki_Handshake", () =>
         {
@@ -280,6 +308,13 @@ public class Bootstrapper
         var scheduler = new StationScheduler(cfg.StationId, plc);
         var processor = new Station5Processor(cfg.StationId, db, plc, stationIdentity, tagResults);
         var viewModel = new Station5ViewModel(cfg.StationId, cfg.Name, scheduler, processor);
+
+        // Konfiguracja systemu wizyjnego, jeśli ścieżki są podane w konfiguracji
+        if (!string.IsNullOrWhiteSpace(cfg.VisionSourcePath) && !string.IsNullOrWhiteSpace(cfg.VisionDestinationPath))
+        {
+            // To wywołanie zasili ścieżkę w procesorze, z której pobierzemy literę dysku w Task 9
+            processor.ConfigureVisionSystem(cfg.VisionSourcePath, cfg.VisionDestinationPath);
+        }
 
         // STOPIEŃ 1 (Szybka pętla cykliczna 50ms): Jeden czysty, funkcyjny blok odczytu i zapisu!
         scheduler.Level1FastJobs.Add(new PlcJob("Szybki_Handshake", () =>
@@ -319,6 +354,13 @@ public class Bootstrapper
         var processor = new Station6Processor(cfg.StationId, db, plc, stationIdentity, tagResults);
         var viewModel = new Station6ViewModel(cfg.StationId, cfg.Name, scheduler, processor);
 
+        // Konfiguracja systemu wizyjnego, jeśli ścieżki są podane w konfiguracji
+        if (!string.IsNullOrWhiteSpace(cfg.VisionSourcePath) && !string.IsNullOrWhiteSpace(cfg.VisionDestinationPath))
+        {
+            // To wywołanie zasili ścieżkę w procesorze, z której pobierzemy literę dysku w Task 9
+            processor.ConfigureVisionSystem(cfg.VisionSourcePath, cfg.VisionDestinationPath);
+        }
+
         // STOPIEŃ 1 (Szybka pętla cykliczna 50ms): Jeden czysty, funkcyjny blok odczytu i zapisu!
         scheduler.Level1FastJobs.Add(new PlcJob("Szybki_Handshake", () =>
         {
@@ -356,6 +398,13 @@ public class Bootstrapper
         var scheduler = new StationScheduler(cfg.StationId, plc);
         var processor = new Station7Processor(cfg.StationId, db, plc, stationIdentity, tagResults);
         var viewModel = new Station7ViewModel(cfg.StationId, cfg.Name, scheduler, processor);
+
+        // Konfiguracja systemu wizyjnego, jeśli ścieżki są podane w konfiguracji
+        if (!string.IsNullOrWhiteSpace(cfg.VisionSourcePath) && !string.IsNullOrWhiteSpace(cfg.VisionDestinationPath))
+        {
+            // To wywołanie zasili ścieżkę w procesorze, z której pobierzemy literę dysku w Task 9
+            processor.ConfigureVisionSystem(cfg.VisionSourcePath, cfg.VisionDestinationPath);
+        }
 
         // STOPIEŃ 1 (Szybka pętla cykliczna 50ms): Jeden czysty, funkcyjny blok odczytu i zapisu!
         scheduler.Level1FastJobs.Add(new PlcJob("Szybki_Handshake", () =>
@@ -398,6 +447,13 @@ public class Bootstrapper
         var processor = new Station8Processor(cfg.StationId, db, plc, stationIdentity, tagResults);
         var viewModel = new Station8ViewModel(cfg.StationId, cfg.Name, scheduler, processor);
 
+        // Konfiguracja systemu wizyjnego, jeśli ścieżki są podane w konfiguracji
+        if (!string.IsNullOrWhiteSpace(cfg.VisionSourcePath) && !string.IsNullOrWhiteSpace(cfg.VisionDestinationPath))
+        {
+            // To wywołanie zasili ścieżkę w procesorze, z której pobierzemy literę dysku w Task 9
+            processor.ConfigureVisionSystem(cfg.VisionSourcePath, cfg.VisionDestinationPath);
+        }
+
         // STOPIEŃ 1 (Szybka pętla cykliczna 50ms): Jeden czysty, funkcyjny blok odczytu i zapisu!
         scheduler.Level1FastJobs.Add(new PlcJob("Szybki_Handshake", () =>
         {
@@ -409,7 +465,6 @@ public class Bootstrapper
                 // Przetworzenie maszyny stanów w RAM
                 scheduler.FeedWatchdog(freshRead.Life);
                 processor.UpdateHandshakeData(freshRead);
-
 
                 // Natychmiastowe odesłanie struktury WRITE (W tym echa sygnału Life)
                 plc.WriteBase(tagHandshakeWrite, processor.GetWriteState());

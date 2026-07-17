@@ -19,6 +19,8 @@ public class StationConfig
     public int StationId { get; set; }
     public string Name { get; set; }
     public string StationType { get; set; } // np. "Screwing", "LeakTest"
+    public string VisionSourcePath { get; set; }
+    public string VisionDestinationPath { get; set; }
     public List<TagConfig> Tags { get; set; } = new List<TagConfig>();
 }
 

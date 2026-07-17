@@ -15,6 +15,7 @@ public enum PlcTaskType : short
     ReworkMfsSn = 6,
     ReworkMotorSn = 7,
     ReworkRadiatorSn = 8,
+    ReworkCheckDiskSpace = 9
 }
 
 public enum PlcTaskStatus : short
@@ -24,6 +25,7 @@ public enum PlcTaskStatus : short
     GeneralError = 2,
     MissingProcessData = 4,
     InvalidParameters = 5,
+    HardDriveSpaceFailed = 6,
 
 
     SQLEmptyResultsData = 50,
@@ -31,6 +33,10 @@ public enum PlcTaskStatus : short
     SQLExecutionError = 52,
     SQLConnectionError = 53,
     SQLUnknownError = 54,
+    SQLReworkEmptyStatus = 55,
+    SQLReworkUnknownStatus = 56,
+    SQLReworkEmptyDMC = 57,
+    SQLReworkDMCNBotFound = 58,
 
     PartAlreadyDoneOK = 60,
     PartAlreadyDoneNOK = 61,
@@ -41,19 +47,23 @@ public enum PlcTaskStatus : short
     PreviousPartNOK = 65,
     PreviousPartNotReworked = 66,
 
-
-    ReworkSt1 = 301,
-    ReworkSt2 = 302,
-    ReworkSt3 = 303,
-    ReworkSt4 = 304,
-    ReworkSt5 = 305,
-    ReworkSt6 = 306,
-    ReworkSt7 = 307,
+    HardDriveSpaceStart = 1000,
+    HardDriveSpaceEnd = 1999,
 
 
 
+    ReworkSt1 = 3100,
+    ReworkSt2 = 3200,
+    ReworkSt3 = 3300,
+    ReworkSt4 = 3400,
+    ReworkSt5 = 3500,
+    ReworkSt6 = 3600,
+    ReworkSt7 = 3700,
 
-    InvalidTaskCode = 999
+
+
+
+    InvalidTaskCode = 9999
 
 
 }

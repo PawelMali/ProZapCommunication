@@ -1,9 +1,10 @@
-﻿using System.Collections.Concurrent;
-using ProZapCommunication.Core.Interfaces;
+﻿using ProZapCommunication.Core.Interfaces;
 using ProZapCommunication.Core.Models;
 using ProZapCommunication.Core.Models.StationData.Read;
 using ProZapCommunication.Core.Models.StationData.Write;
 using Serilog;
+using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
 
 namespace ProZapCommunication.Core.Logic;
 
@@ -27,6 +28,10 @@ public abstract class StationProcessorBase
 
     // Flaga chroniąca przed burzą wywołań funkcji biznesowych (zbocze narastające)
     private bool _isTaskProcessing = false;
+
+    private string _visionSourcePath;
+    private string _visionDestPath;
+    private bool _isVisionConfigured = false;
 
     private DateTime? _taskSentAt;
     private readonly TimeSpan _taskTimeout = TimeSpan.FromSeconds(5);
@@ -221,4 +226,194 @@ public abstract class StationProcessorBase
     /// Zwraca true, jeśli zadanie wykonano pomyślnie i można odpowiedzieć do PLC.
     /// </summary>
     protected abstract bool ExecuteTask(int taskCode);
+
+
+
+
+
+
+
+
+
+
+
+    /// <summary>
+    /// Wywoływane z Bootstrappera, jeśli stacja ma skonfigurowane ścieżki w JSON.
+    /// </summary>
+    public void ConfigureVisionSystem(string sourcePath, string destPath)
+    {
+        if (string.IsNullOrWhiteSpace(sourcePath) || string.IsNullOrWhiteSpace(destPath)) return;
+
+        _visionSourcePath = sourcePath;
+        _visionDestPath = destPath;
+        _isVisionConfigured = true;
+
+        // Tworzymy katalog źródłowy, jeśli nie istnieje (zabezpieczenie przed błędem Directory.GetFiles)
+        Directory.CreateDirectory(_visionSourcePath);
+
+        Log.Information("S{Id} [VISION]: Vision system configured. Source: {Src}, Destination: {Dest}", StationId, _visionSourcePath, _visionDestPath);
+
+        // Uruchamiamy niezależny wątek skanujący w tle (nigdy nie zablokuje to Handshake'a!)
+        Task.Run(VisionSystemLoopAsync);
+    }
+
+    /// <summary>
+    /// Niezależna pętla działająca w tle, odpowiedzialna wyłącznie za system wizyjny.
+    /// </summary>
+    private async Task VisionSystemLoopAsync()
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(500)); // Próbkujemy folder co 100ms
+
+        while (await timer.WaitForNextTickAsync())
+        {
+            // Jeśli sieć jeszcze nie odebrała pierwszej ramki, CurrentReadState to null.
+            // Czekamy na kolejny tik timera (za 100ms), nie rzucając błędem.
+            if (CurrentReadState == null)
+            {
+                continue;
+            }
+
+            // 1. Sprawdzamy czy PLC o cokolwiek prosi
+            int requestMask = CurrentReadState.CameraRequest;
+
+            if (requestMask == 0)
+            {
+                // Jeśli PLC wyzerowało żądanie, my też zerujemy nasze odpowiedzi
+                if (CurrentWriteState.CameraFound != 0 || CurrentWriteState.CameraMoved != 0)
+                {
+                    CurrentWriteState.CameraFound = 0;
+                    CurrentWriteState.CameraMoved = 0;
+                    Log.Debug("S{Id} [VISION]: PLC reset CameraRequest. Resetting PC flags.", StationId);
+                }
+                continue; // Czekamy na kolejne żądanie
+            }
+
+            string currentDmc = CurrentReadState.DMCCamera;
+            if (string.IsNullOrWhiteSpace(currentDmc))
+            {
+                Log.Warning("S{Id} [VISION]: PLC did not provide a DMC code.", StationId);
+                continue;
+            }
+
+            // 2. Przeszukujemy folder źródłowy
+            try
+            {
+                string[] files = Directory.GetFiles(_visionSourcePath);
+
+                foreach (string file in files)
+                {
+                    ProcessVisionFile(file, requestMask, currentDmc);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "S{Id} [VISION]: Error reading source directory.", StationId);
+            }
+        }
+    }
+
+    private void ProcessVisionFile(string filePath, int requestMask, string dmc)
+    {
+        string fileName = Path.GetFileName(filePath);
+
+        // Szukamy w nazwie pliku wzorca "Cam01", "Cam12" itd. (Omijamy sztywne "ST1_", żeby klasa była uniwersalna)
+        //Match match = Regex.Match(fileName, @"Cam(\d+)", RegexOptions.IgnoreCase);
+        Match match = Regex.Match(fileName, @"(?:Cam|DMC)(\d+)", RegexOptions.IgnoreCase);
+        if (!match.Success) return; // To nie jest plik z kamery
+
+        // Parsujemy numer kamery (np. "01" -> 1)
+        if (!int.TryParse(match.Groups[1].Value, out int cameraId)) return;
+
+        // Sprawdzamy czy numer kamery mieści się w zakresie 1-32
+        if (cameraId < 1 || cameraId > 32) return;
+
+        // Tworzymy bit reprezentujący tę kamerę (Kamera 1 = bit 0, Kamera 2 = bit 1)
+        int cameraBit = 1 << (cameraId - 1);
+
+        // Sprawdzamy używając koniunkcji bitowej, czy PLC prosiło o tę kamerę
+        if ((requestMask & cameraBit) != 0)
+        {
+            // KROK A: ZGŁASZAMY ZNALEZIENIE (Ustawiamy bit operatorem OR)
+            CurrentWriteState.CameraFound |= cameraBit;
+
+            // KROK B: TWORZYMY STRUKTURĘ DOCELOWĄ (Rok/Miesiąc/Dzień/DMC)
+            DateTime now = DateTime.Now;
+            string targetDir = Path.Combine(_visionDestPath, now.Year.ToString(), now.Month.ToString("D2"), now.Day.ToString("D2"), dmc, GetStationCameraName(fileName));
+            Directory.CreateDirectory(targetDir);
+
+            // KROK C: PRZYGOTOWANIE NOWEJ NAZWY PLIKU
+            // Sprawdzamy, czy plik już nie ma przedrostka DMC (na wypadek dziwnych zapętleń)
+            string newFileName = fileName.StartsWith(dmc) ? fileName : $"{dmc}_{fileName}";
+            string targetFilePath = Path.Combine(targetDir, newFileName);
+
+            // KROK D: PRÓBA PRZENIESIENIA Z BLOKADĄ (FILE LOCK RETRY)
+            bool moved = TryMoveFileWithRetry(filePath, targetFilePath, maxRetries: 10, delayMs: 50);
+
+            if (moved)
+            {
+                // ZGŁASZAMY SUKCES DO PLC
+                CurrentWriteState.CameraMoved |= cameraBit;
+                Log.Debug("S{Id} [VISION]: Camera {CamId} -> File moved successfully.", StationId, cameraId);
+            }
+            else
+            {
+                Log.Warning("S{Id} [VISION]: Camera {CamId} -> File locked by another process (camera still writing?). Skipped this cycle.", StationId, cameraId);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Algorytm ponowień (Retry Pattern). Jeśli kamera przemysłowa wciąż zapisuje plik, 
+    /// dostaniemy wyjątek IOException. Czekamy 50ms i próbujemy ponownie (max 500ms).
+    /// </summary>
+    private bool TryMoveFileWithRetry(string source, string dest, int maxRetries, int delayMs)
+    {
+        for (int i = 0; i < maxRetries; i++)
+        {
+            try
+            {
+                // Używamy Move (wytnie z temp, wklei do docelowego)
+                // W przypadku duplikatu nazwy pliku nadpisze go (true)
+                File.Move(source, dest, overwrite: true);
+                return true;
+            }
+            catch (IOException) // Błąd braku dostępu do pliku (File in use)
+            {
+                Thread.Sleep(delayMs);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "S{Id} [VISION]: Unexpected error while moving file.", StationId);
+                return false; // Inny błąd (np. brak uprawnień) przerywa próbę
+            }
+        }
+        return false;
+    }
+
+    public static string GetStationCameraName(string fileName)
+    {
+        string name = Path.GetFileNameWithoutExtension(fileName);
+
+        string st = "X";
+        string deviceType = "CAM";
+        string deviceNo = "0X";
+
+        var stMatch = Regex.Match(name, @"St(\d+)", RegexOptions.IgnoreCase);
+        if (stMatch.Success)
+        {
+            st = stMatch.Groups[1].Value;
+        }
+
+        var deviceMatch = Regex.Match(name, @"(CAM|DMC)(\d+)", RegexOptions.IgnoreCase);
+        if (deviceMatch.Success)
+        {
+            deviceType = deviceMatch.Groups[1].Value;
+            deviceNo = int.Parse(deviceMatch.Groups[2].Value).ToString("00");
+        }
+
+        return $"St{st}_{deviceType}{deviceNo}";
+    }
+
+
+
 }

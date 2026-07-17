@@ -1,4 +1,4 @@
-﻿@inherits LayoutComponentBase
+﻿@* @inherits LayoutComponentBase
 
 <div class="page">
     <div class="sidebar">
@@ -26,4 +26,71 @@
 <MudThemeProvider />
 <MudDialogProvider />
 <MudPopoverProvider />
+<MudSnackbarProvider /> *@
+
+@inherits LayoutComponentBase
+
+@* Główny kontener strukturalny MudBlazora *@
+<MudLayout>
+    
+    @* Górny pasek aplikacji (zastępuje .top-row) *@
+    <MudAppBar Elevation="1" Color="Color.Primary">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+        <MudText Typo="Typo.h5" Class="ml-3">Pro-Zap Traceability Application - CRMF Line </MudText>
+        <MudSpacer />
+        <MudImage Src="images/PRO_ZAP_Rev.png" Style="height:90%; display:flex; align-items:center;" Class="ml-2 mr-2" />
+        <MudLink Href="https://www.pro-zap.pl" Target="_blank" Color="Color.Inherit">About</MudLink>
+    </MudAppBar>
+
+    @* Panel boczny na menu (zastępuje .sidebar) *@
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2" Color="Color.Default">
+        <NavMenu />
+    </MudDrawer>
+
+    @* Główna treść strony (zastępuje <main> i <article>) *@
+    <MudMainContent Class="pa-6">
+        @Body
+    </MudMainContent>
+
+</MudLayout>
+
+
+
+@* UI błędów dla Blazor InteractiveServer *@
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@* KLUCZOWE: Przekazujemy nasz własny motyw do ThemeProvidera *@
+<MudThemeProvider Theme="_currentTheme" />
+<MudPopoverProvider />
+<MudDialogProvider />
 <MudSnackbarProvider />
+
+@code {
+    private bool _drawerOpen = true;
+
+    private readonly MudTheme _currentTheme = new MudTheme()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            // Podmieniamy domyślny fiolet na Twój kolor RGB (0, 120, 184) -> HEX: #0078B8
+            Primary = "#0078B8",
+            
+            // Opcjonalnie: Możesz też zdefiniować kolor kropki/aktywnego elementu (AppbarText itp.)
+            //AppBarBackground = "#0078B8",
+        },
+        PaletteDark = new PaletteDark()
+        {
+            // Warto zdefiniować go również dla trybu ciemnego, jeśli planujesz go używać
+            Primary = "#0078B8"
+        }
+    };
+
+    private void ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+}

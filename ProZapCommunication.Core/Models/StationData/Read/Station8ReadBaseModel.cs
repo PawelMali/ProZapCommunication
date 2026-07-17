@@ -2,5 +2,5 @@
 
 public class Station8ReadBaseModel:StationReadBaseModel
 {
-    public int Rework_Status { get; set; }
+    public int Rework_Code { get; set; }
 }

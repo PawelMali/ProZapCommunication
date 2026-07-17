@@ -51,9 +51,9 @@ public class ReportRepository
         // Zakładamy, że interesuje nas ostatni (najświeższy) udany wpis ze stacji 2
         var successfulStation2 = report.Station2History.LastOrDefault(); 
 
-        if (successfulStation2 != null && !string.IsNullOrEmpty(successfulStation2.Mfs_SN))
+        if (successfulStation2 != null && !string.IsNullOrEmpty(successfulStation2.MFS_SN))
         {
-            report.Mfs_SN = successfulStation2.Mfs_SN;
+            report.Mfs_SN = successfulStation2.MFS_SN;
 
             // ====================================================================
             // ETAP 3: Uderzamy do Stacji 7, aby znaleźć Motor_SN
@@ -99,7 +99,10 @@ public class ReportRepository
         await connection.OpenAsync();
 
         string? mainSn = null;
+        string? foundMfsSn = null;
+        string? foundMotorSn = null;
 
+        // KROK 1: Analiza punktu startowego wyszukiwania
         switch (idType.ToUpper())
         {
             case "SN":
@@ -107,44 +110,87 @@ public class ReportRepository
                 break;
 
             case "RADIATOR_SN":
-                // Szukamy głównego SN na Stacji 1 na podstawie Radiator_SN
                 mainSn = await connection.QueryFirstOrDefaultAsync<string>(
                     "SELECT TOP 1 SN FROM Station1Results WHERE Radiator_SN = @value ORDER BY Timestamp DESC",
                     new { value });
                 break;
 
             case "MFS_SN":
-                // Mfs_SN pojawia się na Stacji 2 oraz Stacji 7. 
-                // Najbezpieczniej szukać na Stacji 2, bo tam jest bezpośrednio powiązany z głównym SN.
+                foundMfsSn = value;
+                // Próbujemy znaleźć główny SN
                 mainSn = await connection.QueryFirstOrDefaultAsync<string>(
                     "SELECT TOP 1 SN FROM Station2Results WHERE Mfs_SN = @value ORDER BY Timestamp DESC",
                     new { value });
                 break;
 
             case "MOTOR_SN":
-                // Silnik (Motor_SN) idzie najpierw przez stacje 5-7. Na stacji 7 dostaje Mfs_SN.
-                // KROK A: Znajdź Mfs_SN na podstawie Motor_SN na Stacji 7
-                var mfsSn = await connection.QueryFirstOrDefaultAsync<string>(
+                foundMotorSn = value;
+                // Próbujemy znaleźć Mfs_SN na stacji 7
+                foundMfsSn = await connection.QueryFirstOrDefaultAsync<string>(
                     "SELECT TOP 1 Mfs_SN FROM Station7Results WHERE Motor_SN = @value ORDER BY Timestamp DESC",
                     new { value });
 
-                if (!string.IsNullOrEmpty(mfsSn))
+                if (!string.IsNullOrEmpty(foundMfsSn))
                 {
-                    // KROK B: Mając Mfs_SN, znajdź główny SN na Stacji 2
+                    // Próbujemy znaleźć główny SN na stacji 2
                     mainSn = await connection.QueryFirstOrDefaultAsync<string>(
-                        "SELECT TOP 1 SN FROM Station2Results WHERE Mfs_SN = @mfsSn ORDER BY Timestamp DESC",
-                        new { mfsSn });
+                        "SELECT TOP 1 SN FROM Station2Results WHERE Mfs_SN = @foundMfsSn ORDER BY Timestamp DESC",
+                        new { foundMfsSn });
                 }
                 break;
         }
 
-        if (string.IsNullOrEmpty(mainSn))
+        // KROK 2: Jeśli znaleźliśmy główny SN – pobieramy tradycyjnie KOMPLET danych (Stacje 1-7)
+        if (!string.IsNullOrEmpty(mainSn))
         {
-            return null; // Nie znaleziono powiązania z głównym produktem
+            return await GetTraceabilityReportAsync(mainSn);
         }
 
-        // Wywołujemy naszą istniejącą, kompletną metodę pobierania całego drzewa danych
-        return await GetTraceabilityReportAsync(mainSn);
+        // KROK 3: AWARYJNY SCENARIUSZ (Silnik wyprodukowany, ale jeszcze NIE POŁĄCZONY)
+        // Jeśli nie ma głównego SN, ale szukaliśmy po Motor_SN lub znaleźliśmy go na Stacji 7
+        if (!string.IsNullOrEmpty(foundMotorSn) || !string.IsNullOrEmpty(foundMfsSn))
+        {
+            // Jeżeli znaliśmy tylko Mfs_SN, spróbujmy odnaleźć Motor_SN na stacji 7
+            if (string.IsNullOrEmpty(foundMotorSn) && !string.IsNullOrEmpty(foundMfsSn))
+            {
+                foundMotorSn = await connection.QueryFirstOrDefaultAsync<string>(
+                    "SELECT TOP 1 Motor_SN FROM Station7Results WHERE Mfs_SN = @foundMfsSn ORDER BY Timestamp DESC",
+                    new { foundMfsSn });
+            }
+
+            if (!string.IsNullOrEmpty(foundMotorSn))
+            {
+                // Tworzymy niekompletny raport (tylko dla linii silnika)
+                var partialReport = new ProductionProcessReport
+                {
+                    SN = $"[Unlinked Component] Motor: {foundMotorSn}",
+                    Mfs_SN = foundMfsSn,
+                    Motor_SN = foundMotorSn
+                };
+
+                // Pobieramy historię wyłącznie dla stacji sub-zespołu 5, 6, 7
+                string subLineSql = @"
+                SELECT * FROM Station5Results WHERE Motor_SN = @foundMotorSn ORDER BY Timestamp ASC;
+                SELECT * FROM Station6Results WHERE Motor_SN = @foundMotorSn ORDER BY Timestamp ASC;
+                SELECT * FROM Station7Results WHERE Motor_SN = @foundMotorSn ORDER BY Timestamp ASC;
+            ";
+
+                using (var multiSub = await connection.QueryMultipleAsync(subLineSql, new { foundMotorSn }))
+                {
+                    partialReport.Station5History = (await multiSub.ReadAsync<Station5Result>()).ToList();
+                    partialReport.Station6History = (await multiSub.ReadAsync<Station6Result>()).ToList();
+                    partialReport.Station7History = (await multiSub.ReadAsync<Station7Result>()).ToList();
+                }
+
+                partialReport.TotalAttempts = partialReport.Station5History.Count +
+                                             partialReport.Station6History.Count +
+                                             partialReport.Station7History.Count;
+
+                return partialReport;
+            }
+        }
+
+        return null; // Absolutny brak danych w bazie dla tego numeru
     }
 
     public async Task<IEnumerable<T>> GetStationDataAsync<T>(int stationId, DateTime fromDate, DateTime toDate, int? status = null) where T : class
@@ -154,13 +200,16 @@ public class ReportRepository
 
         // Dynamicznie określamy nazwę tabeli oraz kolumnę statusu (Station 5-7 mają 'Status', 1-4 mają 'SN_Status')
         string tableName = $"Station{stationId}Results";
-        string statusColumn = stationId >= 5 ? "Status" : "SN_Status";
+        string statusColumn = stationId >= 5 ? "Motor_Status" : "SN_Status";
 
         var sqlBuilder = new StringBuilder($"SELECT * FROM {tableName} WHERE Timestamp BETWEEN @fromDate AND @toDate");
 
         if (status.HasValue)
         {
-            sqlBuilder.Append($" AND {statusColumn} = @status");
+            if(status.Value == 3)
+                sqlBuilder.Append($" AND {statusColumn} >=3000 AND {statusColumn} < 4000");
+            else
+                sqlBuilder.Append($" AND {statusColumn} = @status");
         }
 
         sqlBuilder.Append(" ORDER BY Timestamp DESC");

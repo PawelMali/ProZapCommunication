@@ -12,9 +12,13 @@ public class LogixStationReadBase
     public UInt16 Task_Succes_Counter;
     public Int16 Task_Status;
     public LogixString DMC = new LogixString();
+    public LogixString DMC_Camera = new LogixString();
+    public Int32 CameraRequest;
     public Int16 Reserve1;
     public Int16 Reserve2;
     public Int16 Reserve3;
     public Int16 Reserve4;
     public Int16 Reserve5;
+    public Int16 Reserve6;
+    public Int16 Reserve7;
 }

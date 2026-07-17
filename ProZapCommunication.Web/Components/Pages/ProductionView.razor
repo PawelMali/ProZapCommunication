@@ -7,6 +7,7 @@
 @inject IJSRuntime JS
 @inject ISnackbar Snackbar
 
+
 <MudText Typo="Typo.h4" Class="mb-6">Production Overview</MudText>
 
 <MudPaper Elevation="2" Class="pa-4 mb-6">
@@ -17,13 +18,26 @@
         <MudItem xs="12" sm="4" md="3">
             <MudDatePicker @bind-Date="dateTo" Label="To Date" Editable="true" Variant="Variant.Outlined" />
         </MudItem>
+        <MudItem xs="12" sm="3" md="2">
+            <MudSelect @bind-Value="selectedStationId" Label="Stanowisko" Variant="Variant.Outlined">
+                <MudSelectItem Value="1">CRFM 1</MudSelectItem>
+                <MudSelectItem Value="2">CRFM 2</MudSelectItem>
+                <MudSelectItem Value="3">CRFM 3</MudSelectItem>
+                <MudSelectItem Value="4">CRFM 4</MudSelectItem>
+                <MudSelectItem Value="5">MFS 1</MudSelectItem>
+                <MudSelectItem Value="6">MFS 2</MudSelectItem>
+                <MudSelectItem Value="7">MFS 3</MudSelectItem>
+            </MudSelect>
+        </MudItem>
         <MudItem xs="12" sm="4" md="2">
             <MudSelect @bind-Value="filterStatus" Label="Global Status" Variant="Variant.Outlined" Clearable="true">
                 <MudSelectItem Value="((int?)1)">OK Only</MudSelectItem>
-                <MudSelectItem Value="((int?)0)">NOK Only</MudSelectItem>
+                <MudSelectItem Value="((int?)2)">NOK Only</MudSelectItem>
+                <MudSelectItem Value="((int?)3)">REWORK Only</MudSelectItem>
+                <MudSelectItem Value="((int?)4)">SCRAP Only</MudSelectItem>
             </MudSelect>
         </MudItem>
-        <MudItem xs="12" sm="12" md="4" Class="d-flex align-center">
+        <MudItem xs="12" sm="12" md="2" Class="d-flex align-center">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RefreshAllTabs"
                        StartIcon="@Icons.Material.Filled.Refresh" Size="Size.Large" FullWidth="true" Disabled="@isLoading">
                 @if (isLoading)
@@ -37,105 +51,1065 @@
 </MudPaper>
 
 <div class="mb-4 d-flex gap-2">
-    <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Download"
+    <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Download"
                OnClick="DownloadCurrentTabExcel" Size="Size.Medium">
         Export Current View to Excel
     </MudButton>
-    <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Description"
+    <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Description"
                OnClick="DownloadCurrentTabCsv" Size="Size.Medium">
         Export Current View to CSV
     </MudButton>
 </div>
 
-<MudTabs @bind-ActivePanelIndex="activeTabIndex" Elevation="4" Rounded="true" Color="Color.Dark" ApplyEffectsToContainer="true" PanelClass="pa-4">
-    
-    <MudTabPanel Text="Station 1 (Screwing)" Icon="@Icons.Material.Filled.Build">
-        <MudDataGrid @ref="gridStation1" T="Station1Result" Items="@station1Data" Filterable="true" SortMode="SortMode.Multiple" QuickFilter="@QuickFilterStation1"
-                     PageSize="15" PagerVisible="true" Bordered="true" Dense="true" Hover="true">
-            <ToolBarContent>
-                <MudText Typo="Typo.h6">Station 1 Logs</MudText>
-                <MudSpacer />
-                <MudTextField @bind-Value="searchString1" Placeholder="Quick Search (SN...)" Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true" />
-            </ToolBarContent>
-            <Columns>
-                <PropertyColumn Property="x => x.Timestamp" Title="Timestamp" Format="yyyy-MM-dd HH:mm:ss" />
-                <PropertyColumn Property="x => x.SN" Title="Serial Number" />
-                <PropertyColumn Property="x => x.CycleTime" Title="Cycle Time (ms)" />
-                <TemplateColumn Property="x => x.SN_Status" Title="Status">
-                    <CellTemplate>
-                        <MudChip Color="@(context.Item.SN_Status == 1 ? Color.Success : Color.Error)" Size="Size.Small">
-                            @(context.Item.SN_Status == 1 ? "OK" : "NOK")
-                        </MudChip>
-                    </CellTemplate>
-                </TemplateColumn>
-                <PropertyColumn Property="x => x.Radiator_SN" Title="Radiator SN" />
-                <PropertyColumn Property="x => x.Torque" Title="Torque (Nm)" />
-                <PropertyColumn Property="x => x.Angle" Title="Angle (°)" />
-            </Columns>
-            <PagerContent>
-                <MudDataGridPager T="Station1Result" />
-            </PagerContent>
-        </MudDataGrid>
-    </MudTabPanel>
+@if (isLoading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+}
+else
+{
+    @switch (selectedStationId)
+    {
+        case 1:
+            <MudDataGrid @key="@("station1")" @ref="gridStation1" T="Station1Result" Items="@station1Data" Filterable="true" SortMode="SortMode.Multiple" QuickFilter="@QuickFilterStation1" Bordered="true" Dense="true" Hover="true">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">CRFM 1 Logs</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="searchString1" Placeholder="Quick Search (SN...)" Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true" />
+                </ToolBarContent>
 
-    <MudTabPanel Text="Station 2 (Leak Test)" Icon="@Icons.Material.Filled.Air">
-        <MudDataGrid @ref="gridStation2" T="Station2Result" Items="@station2Data" Filterable="true" SortMode="SortMode.Multiple" QuickFilter="@QuickFilterStation2"
-                     PageSize="15" PagerVisible="true" Bordered="true" Dense="true" Hover="true">
-            <ToolBarContent>
-                <MudText Typo="Typo.h6">Station 2 Logs</MudText>
-                <MudSpacer />
-                <MudTextField @bind-Value="searchString2" Placeholder="Quick Search (SN...)" Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true" />
-            </ToolBarContent>
-            <Columns>
-                <PropertyColumn Property="x => x.Timestamp" Title="Timestamp" Format="yyyy-MM-dd HH:mm:ss" />
-                <PropertyColumn Property="x => x.SN" Title="Serial Number" />
-                <PropertyColumn Property="x => x.CycleTime" Title="Cycle Time (ms)" />
-                <TemplateColumn Property="x => x.SN_Status" Title="Status">
-                    <CellTemplate>
-                        <MudChip Color="@(context.Item.SN_Status == 1 ? Color.Success : Color.Error)" Size="Size.Small">
-                            @(context.Item.SN_Status == 1 ? "OK" : "NOK")
-                        </MudChip>
-                    </CellTemplate>
-                </TemplateColumn>
-                <PropertyColumn Property="x => x.Mfs_SN" Title="Mfs SN" />
-                <PropertyColumn Property="x => x.Preasure" Title="Pressure" />
-                <PropertyColumn Property="x => x.Leak" Title="Leak Rate" />
-            </Columns>
-            <PagerContent>
-                <MudDataGridPager T="Station2Result" />
-            </PagerContent>
-        </MudDataGrid>
-    </MudTabPanel>
+                <Columns>
+                    <PropertyColumn Property="x => x.Timestamp" Title="Timestamp" Format="yyyy-MM-dd HH:mm:ss" />
+                    <PropertyColumn Property="x => x.SN" Title="SN" />
+                    <PropertyColumn Property="x => x.SNStatusText" Title="SN Status">
+                        <CellTemplate>
+                            <MudChip Color="@GetMainStatusColor(context.Item.SN_Status)" Size="Size.Small">
+                                @context.Item.SNStatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.SN_Status" Title="SN Status Value" />
 
-</MudTabs>
+                    <PropertyColumn Property="x => x.Radiator_SN" Title="Radiator SN" />
+                    <PropertyColumn Property="x => x.RadiatorStatusText" Title="Radiator Status">
+                        <CellTemplate>
+                            <MudChip Color="@GetMainStatusColor(context.Item.Radiator_Status)" Size="Size.Small">
+                                @context.Item.RadiatorStatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Radiator_Status" Title="Radiator Status Value" />
+
+                    <PropertyColumn Property="x => x.CycleTime" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Cycle<br />Time (s)</HeaderTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Reference_Number" Title="Reference number" />
+
+@*                     <PropertyColumn Property="x => x.Grommet_Left_Bottom_Presence_Cam_1Text" HeaderStyle="white-space: nowrap; text-align: center;" CellStyle="text-align: center;"> *@
+                    <PropertyColumn Property="x => x.Grommet_Left_Bottom_Presence_Cam_1Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Grommet Left <br /> Bottom Presence <br /> CAM1 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Grommet_Left_Bottom_Presence_Cam_1_Status)" Size="Size.Small">
+                                @context.Item.Grommet_Left_Bottom_Presence_Cam_1Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Grommet_Left_Bottom_Presence_Cam_1_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Grommet Left <br /> Bottom Presence <br /> CAM1 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+
+                    <PropertyColumn Property="x => x.Grommet_Right_Bottom_Presence_Cam_2Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Grommet Right <br /> Bottom Presence <br /> CAM2 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Grommet_Right_Bottom_Presence_Cam_2_Status)" Size="Size.Small">
+                                @context.Item.Grommet_Right_Bottom_Presence_Cam_2Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Grommet_Right_Bottom_Presence_Cam_2_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Grommet Right <br /> Bottom Presence <br /> CAM2 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Radiator_Left_Bottom_Grommet_Cam_1Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Radiator Left <br /> Bottom Grommet <br /> CAM1 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Radiator_Left_Bottom_Grommet_Cam_1_Status)" Size="Size.Small">
+                                @context.Item.Radiator_Left_Bottom_Grommet_Cam_1Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Radiator_Left_Bottom_Grommet_Cam_1_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Radiator Left <br /> Bottom Grommet <br /> CAM1 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Radiator_Right_Bottom_Grommet_Cam_2Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Radiator Right <br /> Bottom Grommet <br /> CAM2 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Radiator_Right_Bottom_Grommet_Cam_2_Status)" Size="Size.Small">
+                                @context.Item.Radiator_Right_Bottom_Grommet_Cam_2Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Radiator_Right_Bottom_Grommet_Cam_2_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Radiator Right <br /> Bottom Grommet <br /> CAM2 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Stonegrid_Bottom_Left_Bracket_Cam_3Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Stonegrid Bottom <br /> Left Bracket <br /> CAM3 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Stonegrid_Bottom_Left_Bracket_Cam_3_Status)" Size="Size.Small">
+                                @context.Item.Stonegrid_Bottom_Left_Bracket_Cam_3Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Stonegrid_Bottom_Left_Bracket_Cam_3_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Stonegrid Bottom <br /> Left Bracket <br /> CAM3 Counter</HeaderTemplate>
+                    </PropertyColumn>
+                        
+                    <PropertyColumn Property="x => x.Stonegrid_Top_Left_Slider_Cam_4Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Stonegrid Top <br /> Left Slider <br /> CAM4 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Stonegrid_Top_Left_Slider_Cam_4_Status)" Size="Size.Small">
+                                @context.Item.Stonegrid_Top_Left_Slider_Cam_4Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Stonegrid_Top_Left_Slider_Cam_4_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Stonegrid Top <br /> Left Slider <br /> CAM4 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Stonegrid_Bottom_Right_Bracket_Cam_5Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Stonegrid Bottom <br /> Right Bracket <br /> CAM5 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Stonegrid_Bottom_Right_Bracket_Cam_5_Status)" Size="Size.Small">
+                                @context.Item.Stonegrid_Bottom_Right_Bracket_Cam_5Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Stonegrid_Bottom_Right_Bracket_Cam_5_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Stonegrid Bottom <br /> Right Bracket <br /> CAM5 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Stonegrid_Top_Right_Slider_Cam_6Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Stonegrid Top <br /> Right Slider <br /> CAM6 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Stonegrid_Top_Right_Slider_Cam_6_Status)" Size="Size.Small">
+                                @context.Item.Stonegrid_Top_Right_Slider_Cam_6Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Stonegrid_Top_Right_Slider_Cam_6_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Stonegrid Top <br /> Right Slider <br /> CAM6 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Airduct_Left_Middle_Slider_Cam_4Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Airduct Left <br /> Middle Slider <br /> CAM4 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Airduct_Left_Middle_Slider_Cam_4_Status)" Size="Size.Small">
+                                @context.Item.Airduct_Left_Middle_Slider_Cam_4Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Airduct_Left_Middle_Slider_Cam_4_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Airduct Left <br /> Middle Slider <br /> CAM4 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Airduct_Right_Middle_Slider_Cam_6Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Airduct Right <br /> Middle Slider <br /> CAM6 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Airduct_Right_Middle_Slider_Cam_6_Status)" Size="Size.Small">
+                                @context.Item.Airduct_Right_Middle_Slider_Cam_6Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Airduct_Right_Middle_Slider_Cam_6_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Airduct Right <br /> Middle Slider <br /> CAM6 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Airduct_Left_Top_Bracket_Cam_7Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Airduct Left <br /> Top Bracket <br /> CAM7 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Airduct_Left_Top_Bracket_Cam_7_Status)" Size="Size.Small">
+                                @context.Item.Airduct_Left_Top_Bracket_Cam_7Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Airduct_Left_Top_Bracket_Cam_7_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Airduct Left <br /> Top Bracket <br /> CAM7 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Airduct_Right_Top_Bracket_Cam_8Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Airduct Right <br /> Top Bracket <br /> CAM8 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Airduct_Right_Top_Bracket_Cam_8_Status)" Size="Size.Small">
+                                @context.Item.Airduct_Right_Top_Bracket_Cam_8Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Airduct_Right_Top_Bracket_Cam_8_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Airduct Right <br /> Top Bracket <br /> CAM8 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Airduct_Left_Top_Balcony_Cam_9Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Airduct Left <br /> Top Bracket <br /> CAM9 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Airduct_Left_Top_Balcony_Cam_9_Status)" Size="Size.Small">
+                                @context.Item.Airduct_Left_Top_Balcony_Cam_9Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Airduct_Left_Top_Balcony_Cam_9_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Airduct Left <br /> Top Balcony <br /> CAM9 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Airduct_Right_Top_Balcony_Cam_10Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Airduct Right <br /> Top Balcony <br /> CAM10 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Airduct_Right_Top_Balcony_Cam_10_Status)" Size="Size.Small">
+                                @context.Item.Airduct_Right_Top_Balcony_Cam_10Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Airduct_Right_Top_Balcony_Cam_10_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Airduct Right <br /> Top Balcony <br /> CAM10 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Airduct_Middle_Bottom_Ridge_Cam_11Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Airduct Middle <br /> Bottom Ridge <br /> CAM11 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Airduct_Middle_Bottom_Ridge_Cam_11_Status)" Size="Size.Small">
+                                @context.Item.Airduct_Middle_Bottom_Ridge_Cam_11Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Airduct_Middle_Bottom_Ridge_Cam_11_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Airduct Middle <br /> Bottom Ridge <br /> CAM11 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="Station1Result" PageSizeOptions="new int[] { 15, 30, 50, 100 }" />
+                </PagerContent>
+            </MudDataGrid>
+            break;
+
+        case 2:
+            <MudDataGrid @key="@("station2")" @ref="gridStation2" T="Station2Result" Items="@station2Data" Filterable="true" SortMode="SortMode.Multiple" QuickFilter="@QuickFilterStation2" Bordered="true" Dense="true" Hover="true">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">CRFM 2 Logs</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="searchString2" Placeholder="Quick Search (SN...)" Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true" />
+                </ToolBarContent>
+
+                <Columns>
+                    <PropertyColumn Property="x => x.Timestamp" Title="Timestamp" Format="yyyy-MM-dd HH:mm:ss" />
+                    <PropertyColumn Property="x => x.SN" Title="SN" />
+                    <PropertyColumn Property="x => x.SNStatusText" Title="SN Status">
+                        <CellTemplate>
+                            <MudChip Color="@GetMainStatusColor(context.Item.SN_Status)" Size="Size.Small">
+                                @context.Item.SNStatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.SN_Status" Title="SN Status Value" />
+
+                    <PropertyColumn Property="x => x.MFS_SN" Title="MFS SN" />
+                    <PropertyColumn Property="x => x.MFSStatusText" Title="MFS Status">
+                        <CellTemplate>
+                            <MudChip Color="@GetMainStatusColor(context.Item.MFS_Status)" Size="Size.Small">
+                                @context.Item.MFSStatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.MFS_Status" Title="MFS Status Value" />
+
+                    <PropertyColumn Property="x => x.CycleTime" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Cycle<br />Time (s)</HeaderTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Reference_Number" Title="Reference number" />
+
+                    <PropertyColumn Property="x => x.MFS_Left_Bottom_Balcony_Cam_1Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>MFS Left <br /> Bottom Balcony <br /> CAM1 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.MFS_Left_Bottom_Balcony_Cam_1_Status)" Size="Size.Small">
+                                @context.Item.MFS_Left_Bottom_Balcony_Cam_1Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.MFS_Left_Bottom_Balcony_Cam_1_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>MFS Left <br /> Bottom Balcony <br /> CAM1 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+
+                    <PropertyColumn Property="x => x.MFS_Left_Middle_Guide_Cam_2Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>MFS Left <br /> Middle Guide <br /> CAM2 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.MFS_Left_Middle_Guide_Cam_2_Status)" Size="Size.Small">
+                                @context.Item.MFS_Left_Middle_Guide_Cam_2Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.MFS_Left_Middle_Guide_Cam_2_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>MFS Left <br /> Middle Guide <br /> CAM2 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.MFS_Left_Top_Bracket_Cam_3Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>MFS Left <br /> Top Bracket <br /> CAM3 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.MFS_Left_Top_Bracket_Cam_3_Status)" Size="Size.Small">
+                                @context.Item.MFS_Left_Top_Bracket_Cam_3Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.MFS_Left_Top_Bracket_Cam_3_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>MFS Left <br /> Top Bracket <br /> CAM3 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.MFS_Middle_Top_Ridge_Cam_4Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>MFS Middle <br /> Top Ridge <br /> CAM4 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.MFS_Middle_Top_Ridge_Cam_4_Status)" Size="Size.Small">
+                                @context.Item.MFS_Middle_Top_Ridge_Cam_4Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.MFS_Middle_Top_Ridge_Cam_4_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>MFS Middle <br /> Top Ridge <br /> CAM4 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.MFS_Right_Top_Bracket_Cam_5Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>MFS Right <br /> Top Bracket <br /> CAM5 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.MFS_Right_Top_Bracket_Cam_5_Status)" Size="Size.Small">
+                                @context.Item.MFS_Right_Top_Bracket_Cam_5Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.MFS_Right_Top_Bracket_Cam_5_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>MFS Right <br /> Top Bracket <br /> CAM5 Counter</HeaderTemplate>
+                    </PropertyColumn>
+                        
+                    <PropertyColumn Property="x => x.MFS_Right_Middle_Guide_Cam_6Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>MFS Right <br /> Middle Guide <br /> CAM6 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.MFS_Right_Middle_Guide_Cam_6_Status)" Size="Size.Small">
+                                @context.Item.MFS_Right_Middle_Guide_Cam_6Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.MFS_Right_Middle_Guide_Cam_6_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>MFS Right <br /> Middle Guide <br /> CAM6 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.MFS_Right_Bottom_Balcony_Cam_7Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>MFS Right <br /> Bottom Balcony <br /> CAM7 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.MFS_Right_Bottom_Balcony_Cam_7_Status)" Size="Size.Small">
+                                @context.Item.MFS_Right_Bottom_Balcony_Cam_7Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.MFS_Right_Bottom_Balcony_Cam_7_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>MFS Right <br /> Bottom Balcony <br /> CAM7 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Radiator_Left_Top_Grommet_Cam_8Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Radiator Left <br /> Top Grommet <br /> CAM8 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Radiator_Left_Top_Grommet_Cam_8_Status)" Size="Size.Small">
+                                @context.Item.Radiator_Left_Top_Grommet_Cam_8Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Radiator_Left_Top_Grommet_Cam_8_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Radiator Left <br /> Top Grommet <br /> CAM8 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Radiator_Right_Top_Grommet_Cam_9Text" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Radiator Right <br /> Top Grommet <br /> CAM9 Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Radiator_Right_Top_Grommet_Cam_9_Status)" Size="Size.Small">
+                                @context.Item.Radiator_Right_Top_Grommet_Cam_9Text
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Radiator_Right_Top_Grommet_Cam_9_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Radiator Right <br /> Top Grommet <br /> CAM9 Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Shipping_Caps_Disassembly_Status" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Shipping Caps <br /> Disassembly <br /> Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Shipping_Caps_Disassembly_Status)" Size="Size.Small">
+                                @context.Item.Shipping_Caps_DisassemblyText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Shipping_Caps_Disassembly_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Shipping Caps <br /> Disassembly <br /> Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="Station2Result" PageSizeOptions="new int[] { 15, 30, 50, 100 }" />
+                </PagerContent>
+            </MudDataGrid>
+            break;
+
+        case 3:
+            <MudDataGrid @key="@("station3")" @ref="gridStation3" T="Station3Result" Items="@station3Data" Filterable="true" SortMode="SortMode.Multiple" QuickFilter="@QuickFilterStation3" Bordered="true" Dense="true" Hover="true">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">CRFM 3 Logs</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="searchString3" Placeholder="Quick Search (SN...)" Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true" />
+                </ToolBarContent>
+
+                <Columns>
+                    <PropertyColumn Property="x => x.Timestamp" Title="Timestamp" Format="yyyy-MM-dd HH:mm:ss" />
+                    <PropertyColumn Property="x => x.SN" Title="SN" />
+                    <PropertyColumn Property="x => x.SNStatusText" Title="SN Status">
+                        <CellTemplate>
+                            <MudChip Color="@GetMainStatusColor(context.Item.SN_Status)" Size="Size.Small">
+                                @context.Item.SNStatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.SN_Status" Title="SN Status Value" />
+
+                    <PropertyColumn Property="x => x.CycleTime" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Cycle<br />Time (s)</HeaderTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Reference_Number" Title="Reference number" />
+
+                    <PropertyColumn Property="x => x.LeakTestText" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Leak Test <br /> Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.LeakTest_Status)" Size="Size.Small">
+                                @context.Item.LeakTestText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.LeakTest_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Leak Test <br /> Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.LeakTest_MethodText" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Method</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.LeakTest_Program_Number" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Program <br /> Number</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.LeakTest_Pressure" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Pressure <br /> (mPa)</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.LeakTest_Pressure_Drop" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Pressure Drop <br /> (mPa)</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.LeakTest_Leak_Rate" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Leak Rate <br /> (μL/min)</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.LeakTest_Temperature" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Temperature <br /> (mKelvin)</HeaderTemplate>
+                    </PropertyColumn>
+
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="Station3Result" PageSizeOptions="new int[] { 15, 30, 50, 100 }" />
+                </PagerContent>
+            </MudDataGrid>
+            break;
+
+        case 4:
+            <MudDataGrid @key="@("station4")" @ref="gridStation4" T="Station4Result" Items="@station4Data" Filterable="true" SortMode="SortMode.Multiple" QuickFilter="@QuickFilterStation4" Bordered="true" Dense="true" Hover="true">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">CRFM 4 Logs</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="searchString4" Placeholder="Quick Search (SN...)" Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true" />
+                </ToolBarContent>
+
+                <Columns>
+                    <PropertyColumn Property="x => x.Timestamp" Title="Timestamp" Format="yyyy-MM-dd HH:mm:ss" />
+                    <PropertyColumn Property="x => x.SN" Title="SN" />
+                    <PropertyColumn Property="x => x.SNStatusText" Title="SN Status">
+                        <CellTemplate>
+                            <MudChip Color="@GetMainStatusColor(context.Item.SN_Status)" Size="Size.Small">
+                                @context.Item.SNStatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.SN_Status" Title="SN Status Value" />
+
+                    <PropertyColumn Property="x => x.CycleTime" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Cycle<br />Time (s)</HeaderTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Reference_Number" Title="Reference number" />
+
+                    <PropertyColumn Property="x => x.Shipping_Caps_AssemblyText" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Shipping Caps <br />  Assembly Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Shipping_Caps_Assembly_Status)" Size="Size.Small">
+                                @context.Item.Shipping_Caps_AssemblyText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Shipping_Caps_Assembly_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Shipping Caps <br /> Assembly Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Print_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Print Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.DMC_Quality_ContentText" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC Quality Content <br /> Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.DMC_Quality_Content_Status)" Size="Size.Small">
+                                @context.Item.DMC_Quality_ContentText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.DMC_Quality_Content_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC Quality Content <br /> Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.DMC_Quality_GradeText" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC Quality Grade <br /> Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.DMC_Quality_Grade_Status)" Size="Size.Small">
+                                @context.Item.DMC_Quality_GradeText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.DMC_Quality_Grade_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC Quality Grade <br /> Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.DMC_Quality_Grade_Result" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC Quality Grade <br /> Result</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.DMC_OCR_Homologation_Part_NumberText" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC OCR <br /> Homologation <br /> Part Number Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.DMC_OCR_Homologation_Part_Number_Status)" Size="Size.Small">
+                                @context.Item.DMC_OCR_Homologation_Part_NumberText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.DMC_OCR_Homologation_Part_Number_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC OCR <br /> Homologation <br /> Part Number Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.DMC_OCR_SupplierText" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC OCR <br /> Supplier <br /> Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.DMC_OCR_Supplier_Status)" Size="Size.Small">
+                                @context.Item.DMC_OCR_SupplierText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.DMC_OCR_Supplier_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC OCR <br /> Supplier <br /> Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.DMC_OCR_Country_Of_OriginText" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC OCR <br /> Country Of Origin <br /> Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.DMC_OCR_Country_Of_Origin_Status)" Size="Size.Small">
+                                @context.Item.DMC_OCR_Country_Of_OriginText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.DMC_OCR_Country_Of_Origin_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC OCR  <br /> Country Of Origin <br /> Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="Station4Result" PageSizeOptions="new int[] { 15, 30, 50, 100 }" />
+                </PagerContent>
+            </MudDataGrid>
+            break;
+        
+        case 5:
+            <MudDataGrid @key="@("station5")" @ref="gridStation5" T="Station5Result" Items="@station5Data" Filterable="true" SortMode="SortMode.Multiple" QuickFilter="@QuickFilterStation5" Bordered="true" Dense="true" Hover="true">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">MFS 1 Logs</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="searchString5" Placeholder="Quick Search (SN...)" Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true" />
+                </ToolBarContent>
+
+                <Columns>
+                    <PropertyColumn Property="x => x.Timestamp" Title="Timestamp" Format="yyyy-MM-dd HH:mm:ss" />
+                    <PropertyColumn Property="x => x.Motor_SN" Title="Motor SN" />
+                    <PropertyColumn Property="x => x.MotorStatusText" Title="Motor Status">
+                        <CellTemplate>
+                            <MudChip Color="@GetMainStatusColor(context.Item.Motor_Status)" Size="Size.Small">
+                                @context.Item.MotorStatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Motor_Status" Title="Motor Status Value" />
+                    <PropertyColumn Property="x => x.CycleTime" HeaderStyle="white-space: nowrap;" >
+                        <HeaderTemplate>Cycle<br />Time (s)</HeaderTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Reference_Number" Title="Reference number" />
+                    
+                    <PropertyColumn Property="x => x.MotorInspectionStatusText" Title="Motor Inspection Status">
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Motor_Inspection_Status)" Size="Size.Small">
+                                @context.Item.MotorInspectionStatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Motor_Inspection_Counter" Title="Motor Inspection Counter" />
+                    <PropertyColumn Property="x => x.FanInspectionStatusText" Title="Fan Inspection Status">
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Fan_Inspection_Status)" Size="Size.Small">
+                                @context.Item.FanInspectionStatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Fan_Inspection_Counter" Title="Fan Inspection Counter" />
+
+                    <PropertyColumn Property="x => x.Screw1StatusText" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Screw 1<br />Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Screw1_Status)" Size="Size.Small">
+                                @context.Item.Screw1StatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw1_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 1<br />Counter
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw1_Counter}")
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw1_Program_Number" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 1<br />Program Number
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw1_Program_Number}")
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw1_Torque" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 1<br />Torque
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw1_Torque} Nm")
+                        </CellTemplate>
+                    </PropertyColumn>
+                   <PropertyColumn Property="x => x.Screw1_Angle" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 1<br />Angle
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw1_Angle} °")
+                        </CellTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Screw2StatusText" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Screw 2<br />Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Screw2_Status)" Size="Size.Small">
+                                @context.Item.Screw2StatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw2_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 2<br />Counter
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw2_Counter}")
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw2_Program_Number" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 2<br />Program Number
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw2_Program_Number}")
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw2_Torque" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 2<br />Torque
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw2_Torque} Nm")
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw2_Angle" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 2<br />Angle
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw2_Angle} °")
+                        </CellTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Screw3StatusText" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Screw 3<br />Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Screw3_Status)" Size="Size.Small">
+                                @context.Item.Screw3StatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw3_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 3<br />Counter
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw3_Counter}")
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw3_Program_Number" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 3<br />Program Number
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw3_Program_Number}")
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw3_Torque" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 3<br />Torque
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw3_Torque} Nm")
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw3_Angle" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 3<br />Angle
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw3_Angle} °")
+                        </CellTemplate>
+                    </PropertyColumn>
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="Station5Result" PageSizeOptions="new int[] { 15, 30, 50, 100 }" />
+                </PagerContent>
+            </MudDataGrid>
+            break;
+        case 7:
+            <MudDataGrid @key="@("station7")" @ref="gridStation7" T="Station7Result" Items="@station7Data" Filterable="true" SortMode="SortMode.Multiple" QuickFilter="@QuickFilterStation7"
+                         PageSize="15" PagerVisible="true" Bordered="true" Dense="true" Hover="true">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">MFS 3 Logs</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="searchString7" Placeholder="Quick Search (SN...)" Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true" />
+                </ToolBarContent>
+
+                <Columns>
+                    <PropertyColumn Property="x => x.Timestamp" Title="Timestamp" Format="yyyy-MM-dd HH:mm:ss" />
+                    <PropertyColumn Property="x => x.Motor_SN" Title="Motor SN" />
+                    <PropertyColumn Property="x => x.Mfs_SN" Title="MFS SN" />
+                    <PropertyColumn Property="x => x.MotorStatusText" Title="Motor/MFS Status">
+                        <CellTemplate>
+                            <MudChip Color="@GetMainStatusColor(context.Item.Motor_Status)" Size="Size.Small">
+                                @context.Item.MotorStatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Motor_Status" Title="Motor/MFS Status Value" />
+                    <PropertyColumn Property="x => x.CycleTime" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Cycle<br />Time (s)</HeaderTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Reference_Number" Title="Reference number" />
+
+                    <PropertyColumn Property="x => x.ShraudStatusText" Title="Shraud Inspection Status">
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Shraud_Status)" Size="Size.Small">
+                                @context.Item.ShraudStatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Shraud_Counter" Title="Shraud Inspection Counter" />
+                    <PropertyColumn Property="x => x.CableStatusText" Title="Cable Inspection Status">
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Cable_Status)" Size="Size.Small">
+                                @context.Item.CableStatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Cable_Counter" Title="Cable Inspection Counter" />
+                    <PropertyColumn Property="x => x.PlugStatusText" Title="Plug Inspection Status">
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Plug_Status)" Size="Size.Small">
+                                @context.Item.PlugStatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Plug_Counter" Title="Plug Inspection Counter" />
+                    <PropertyColumn Property="x => x.ShippingCapStatusText" Title="Shipping Cap Inspection Status">
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Shipping_Cap_Status)" Size="Size.Small">
+                                @context.Item.ShippingCapStatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Shipping_Cap_Counter" Title="Shipping Cap Inspection Counter" />
+
+                    <PropertyColumn Property="x => x.Print_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Print Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.DMC_Quality_ContentText" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC Quality Content <br /> Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.DMC_Quality_Content_Status)" Size="Size.Small">
+                                @context.Item.DMC_Quality_ContentText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.DMC_Quality_Content_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC Quality Content <br /> Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.DMC_Quality_GradeText" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC Quality Grade <br /> Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.DMC_Quality_Grade_Status)" Size="Size.Small">
+                                @context.Item.DMC_Quality_GradeText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.DMC_Quality_Grade_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC Quality Grade <br /> Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.DMC_Quality_Grade_Result" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC Quality Grade <br /> Result</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.DMC_OCR_Homologation_Part_NumberText" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC OCR <br /> Homologation <br /> Part Number Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.DMC_OCR_Homologation_Part_Number_Status)" Size="Size.Small">
+                                @context.Item.DMC_OCR_Homologation_Part_NumberText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.DMC_OCR_Homologation_Part_Number_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC OCR <br /> Homologation <br /> Part Number Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.DMC_OCR_SupplierText" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC OCR <br /> Supplier <br /> Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.DMC_OCR_Supplier_Status)" Size="Size.Small">
+                                @context.Item.DMC_OCR_SupplierText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.DMC_OCR_Supplier_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC OCR <br /> Supplier <br /> Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.DMC_OCR_Country_Of_OriginText" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC OCR <br /> Country Of Origin <br /> Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.DMC_OCR_Country_Of_Origin_Status)" Size="Size.Small">
+                                @context.Item.DMC_OCR_Country_Of_OriginText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.DMC_OCR_Country_Of_Origin_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>DMC OCR  <br /> Country Of Origin <br /> Counter</HeaderTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Screw1StatusText" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Screw 1<br />Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Screw1_Status)" Size="Size.Small">
+                                @context.Item.Screw1StatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw1_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 1<br />Counter
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw1_Counter}")
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw1_Program_Number" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 1<br />Program Number
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw1_Program_Number}")
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw1_Torque" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 1<br />Torque
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw1_Torque} Nm")
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw1_Angle" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 1<br />Angle
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw1_Angle} °")
+                        </CellTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Screw2StatusText" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Screw 2<br />Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Screw2_Status)" Size="Size.Small">
+                                @context.Item.Screw2StatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw2_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 2<br />Counter
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw2_Counter}")
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw2_Program_Number" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 2<br />Program Number
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw2_Program_Number}")
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw2_Torque" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 2<br />Torque
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw2_Torque} Nm")
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw2_Angle" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 2<br />Angle
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw2_Angle} °")
+                        </CellTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="x => x.Screw3StatusText" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Screw 3<br />Status</HeaderTemplate>
+                        <CellTemplate>
+                            <MudChip Color="@GetVisionStatusColor(context.Item.Screw3_Status)" Size="Size.Small">
+                                @context.Item.Screw3StatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw3_Counter" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 3<br />Counter
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw3_Counter}")
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw3_Program_Number" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 3<br />Program Number
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw3_Program_Number}")
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw3_Torque" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 3<br />Torque
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw3_Torque} Nm")
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Screw3_Angle" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>
+                            Screw 3<br />Angle
+                        </HeaderTemplate>
+                        <CellTemplate>
+                            @($"{context.Item.Screw3_Angle} °")
+                        </CellTemplate>
+                    </PropertyColumn>
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="Station7Result" PageSizeOptions="new int[] { 15, 30, 50, 100 }" />
+                </PagerContent>
+            </MudDataGrid>
+            break;
+    }
+}
+
 
 @code {
     private DateTime? dateFrom = DateTime.Today.AddDays(-1);
     private DateTime? dateTo = DateTime.Today.AddDays(1).AddSeconds(-1);
     private int? filterStatus;
     private bool isLoading = false;
-    private int activeTabIndex = 0; // Śledzi, który tab jest otwarty
+    private int selectedStationId = 1; // Domyślnie wybrana stacja 1
 
     // Referencje do obiektów gridów
     private MudDataGrid<Station1Result>? gridStation1;
     private MudDataGrid<Station2Result>? gridStation2;
+    private MudDataGrid<Station3Result>? gridStation3;
+    private MudDataGrid<Station4Result>? gridStation4;
+    private MudDataGrid<Station5Result>? gridStation5;
+    private MudDataGrid<Station6Result>? gridStation6;
+    private MudDataGrid<Station7Result>? gridStation7;
 
     private IEnumerable<Station1Result> station1Data = new List<Station1Result>();
     private IEnumerable<Station2Result> station2Data = new List<Station2Result>();
+    private IEnumerable<Station3Result> station3Data = new List<Station3Result>();
+    private IEnumerable<Station4Result> station4Data = new List<Station4Result>();
+    private IEnumerable<Station5Result> station5Data = new List<Station5Result>();
+    private IEnumerable<Station6Result> station6Data = new List<Station6Result>();
+    private IEnumerable<Station7Result> station7Data = new List<Station7Result>();
 
     private string searchString1 = string.Empty;
     private string searchString2 = string.Empty;
+    private string searchString3 = string.Empty;
+    private string searchString4 = string.Empty;
+    private string searchString5 = string.Empty;
+    private string searchString6 = string.Empty;
+    private string searchString7 = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadData();
+        await LoadData(isManualRefresh: false);
     }
 
-    private async Task RefreshAllTabs() => await LoadData();
+    private async Task RefreshAllTabs() => await LoadData(isManualRefresh: true);
 
-    private async Task LoadData()
+    private async Task LoadData(bool isManualRefresh = false)
     {
         if (dateFrom == null || dateTo == null) return;
         isLoading = true;
@@ -143,25 +1117,61 @@
 
         try
         {
-            var task1 = Repository.GetStationDataAsync<Station1Result>(1, dateFrom.Value, dateTo.Value, filterStatus);
-            var task2 = Repository.GetStationDataAsync<Station2Result>(2, dateFrom.Value, dateTo.Value, filterStatus);
+            // Czyszczenie starych danych, aby zwolnić pamięć RAM przed pobraniem nowych
+            ClearAllData();
 
-            await Task.WhenAll(task1, task2);
+            // Pobieramy dane TYLKO dla wybranej na górze stacji
+            switch (selectedStationId)
+            {
+                case 1:
+                    station1Data = await Repository.GetStationDataAsync<Station1Result>(1, dateFrom.Value, dateTo.Value, filterStatus);
+                    break;
+                case 2:
+                    station2Data = await Repository.GetStationDataAsync<Station2Result>(2, dateFrom.Value, dateTo.Value, filterStatus);
+                    break;
+                case 3:
+                    station3Data = await Repository.GetStationDataAsync<Station3Result>(3, dateFrom.Value, dateTo.Value, filterStatus);
+                    break;
+                case 4:
+                    station4Data = await Repository.GetStationDataAsync<Station4Result>(4, dateFrom.Value, dateTo.Value, filterStatus);
+                    break;
+                case 5:
+                    station5Data = await Repository.GetStationDataAsync<Station5Result>(5, dateFrom.Value, dateTo.Value, filterStatus);
+                    break;
+                case 6:
+                    station6Data = await Repository.GetStationDataAsync<Station6Result>(6, dateFrom.Value, dateTo.Value, filterStatus);
+                    break;
+                case 7:
+                    station7Data = await Repository.GetStationDataAsync<Station7Result>(7, dateFrom.Value, dateTo.Value, filterStatus);
+                    break;
+            }
 
-            station1Data = await task1;
-            station2Data = await task2;
-
-            Snackbar.Add("Production logs updated successfully.", Severity.Success);
+            if (isManualRefresh)
+            {
+                Snackbar.Add($"Data for Station {selectedStationId} loaded successfully.", Severity.Success);
+            }
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error loading production data: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Error loading data: {ex.Message}", Severity.Error);
         }
         finally
         {
             isLoading = false;
         }
     }
+
+    private void ClearAllData()
+    {
+        station1Data = Enumerable.Empty<Station1Result>();
+        station2Data = Enumerable.Empty<Station2Result>();
+        station3Data = Enumerable.Empty<Station3Result>();
+        station4Data = Enumerable.Empty<Station4Result>();
+        station5Data = Enumerable.Empty<Station5Result>();
+        station6Data = Enumerable.Empty<Station6Result>();
+        station7Data = Enumerable.Empty<Station7Result>();
+    }
+
 
     // ====================================================================
     // METODY DLA DYNAMICZNEGO EKSPORTU Z FILTRAMI W LOCIE
@@ -172,22 +1182,68 @@
         byte[] fileBytes;
         string fileName;
 
-        if (activeTabIndex == 0 && gridStation1 != null)
+        switch (selectedStationId)
         {
-            // Pobieramy TYLKO to co aktualnie odfiltrował użytkownik w gridzie stacji 1
-            var data = gridStation1.FilteredItems;
-            fileBytes = ExportService.ExportFilteredStationToExcel(data, "Station 1");
-            fileName = $"Production_Station1_{DateTime.Now:yyyyMMdd}.xlsx";
-        }
-        else if (activeTabIndex == 1 && gridStation2 != null)
-        {
-            var data = gridStation2.FilteredItems;
-            fileBytes = ExportService.ExportFilteredStationToExcel(data, "Station 2");
-            fileName = $"Production_Station2_{DateTime.Now:yyyyMMdd}.xlsx";
-        }
-        else return;
+            case 1:
+                {
+                    var data = gridStation1.FilteredItems;
+                    fileBytes = ExportService.ExportFilteredStationToExcel(data, "CRFM 1");
+                    fileName = $"Production_CRFM1_{DateTime.Now:yyyyMMdd}.xlsx";
+                    break;
+                }
 
-        await JS.InvokeVoidAsync("downloadFileFromBytes", fileName, Convert.ToBase64String(fileBytes));
+            case 2:
+                {
+                    var data = gridStation2.FilteredItems;
+                    fileBytes = ExportService.ExportFilteredStationToExcel(data, "CRFM 2");
+                    fileName = $"Production_CRFM2_{DateTime.Now:yyyyMMdd}.xlsx";
+                    break;
+                }
+            case 3:
+                {
+                    var data = gridStation3.FilteredItems;
+                    fileBytes = ExportService.ExportFilteredStationToExcel(data, "CRFM 3");
+                    fileName = $"Production_CRFM3_{DateTime.Now:yyyyMMdd}.xlsx";
+                    break;
+                }
+            case 4:
+                {
+                    var data = gridStation4.FilteredItems;
+                    fileBytes = ExportService.ExportFilteredStationToExcel(data, "CRFM 4");
+                    fileName = $"Production_CRFM4_{DateTime.Now:yyyyMMdd}.xlsx";
+                    break;
+                }
+            case 5:
+                {
+                    var data = gridStation5.FilteredItems;
+                    fileBytes = ExportService.ExportFilteredStationToExcel(data, "MSF 1");
+                    fileName = $"Production_MSF1_{DateTime.Now:yyyyMMdd}.xlsx";
+                    break;
+                }
+            case 6:
+                {
+                    var data = gridStation6.FilteredItems;
+                    fileBytes = ExportService.ExportFilteredStationToExcel(data, "MSF 2");
+                    fileName = $"Production_MSF2_{DateTime.Now:yyyyMMdd}.xlsx";
+                    break;
+                }
+            case 7:
+                {
+                    var data = gridStation7.FilteredItems;
+                    fileBytes = ExportService.ExportFilteredStationToExcel(data, "MFS3");
+                    fileName = $"Production_MFS3_{DateTime.Now:yyyyMMdd}.xlsx";
+                    break;
+                }
+
+            default:
+                return;
+        }
+
+        await JS.InvokeVoidAsync(
+            "downloadFileFromBytes",
+            fileName,
+            Convert.ToBase64String(fileBytes));
+
         Snackbar.Add("Filtered view exported to Excel.", Severity.Success);
     }
 
@@ -196,17 +1252,47 @@
         byte[] fileBytes;
         string fileName;
 
-        if (activeTabIndex == 0 && gridStation1 != null)
+        if (selectedStationId == 1 )
         {
             var data = gridStation1.FilteredItems;
             fileBytes = ExportService.ExportFilteredStationToCsv(data);
-            fileName = $"Production_Station1_{DateTime.Now:yyyyMMdd}.csv";
+            fileName = $"Production_CRMF1_{DateTime.Now:yyyyMMdd}.csv";
         }
-        else if (activeTabIndex == 1 && gridStation2 != null)
+        else if (selectedStationId == 2 )
         {
             var data = gridStation2.FilteredItems;
             fileBytes = ExportService.ExportFilteredStationToCsv(data);
-            fileName = $"Production_Station2_{DateTime.Now:yyyyMMdd}.csv";
+            fileName = $"Production_CRMF2_{DateTime.Now:yyyyMMdd}.csv";
+        }
+        else if (selectedStationId == 3)
+        {
+            var data = gridStation3.FilteredItems;
+            fileBytes = ExportService.ExportFilteredStationToCsv(data);
+            fileName = $"Production_CRMF3_{DateTime.Now:yyyyMMdd}.csv";
+        }
+        else if (selectedStationId == 4)
+        {
+            var data = gridStation4.FilteredItems;
+            fileBytes = ExportService.ExportFilteredStationToCsv(data);
+            fileName = $"Production_CRMF4_{DateTime.Now:yyyyMMdd}.csv";
+        }
+        else if (selectedStationId == 5)
+        {
+            var data = gridStation5.FilteredItems;
+            fileBytes = ExportService.ExportFilteredStationToCsv(data);
+            fileName = $"Production_MSF1_{DateTime.Now:yyyyMMdd}.csv";
+        }
+        else if (selectedStationId == 6)
+        {
+            var data = gridStation6.FilteredItems;
+            fileBytes = ExportService.ExportFilteredStationToCsv(data);
+            fileName = $"Production_MSF2_{DateTime.Now:yyyyMMdd}.csv";
+        }
+        else if (selectedStationId == 7)
+        {
+            var data = gridStation7.FilteredItems;
+            fileBytes = ExportService.ExportFilteredStationToCsv(data);
+            fileName = $"Production_MSF3_{DateTime.Now:yyyyMMdd}.csv";
         }
         else return;
 
@@ -215,7 +1301,12 @@
     }
 
     private bool QuickFilterStation1(Station1Result item) => FilterResult(item, searchString1, item.SN, item.Radiator_SN);
-    private bool QuickFilterStation2(Station2Result item) => FilterResult(item, searchString2, item.SN, item.Mfs_SN);
+    private bool QuickFilterStation2(Station2Result item) => FilterResult(item, searchString2, item.SN, item.MFS_SN);
+    private bool QuickFilterStation3(Station3Result item) => FilterResult(item, searchString3, item.SN);
+    private bool QuickFilterStation4(Station4Result item) => FilterResult(item, searchString4, item.SN);
+    private bool QuickFilterStation5(Station5Result item) => FilterResult(item, searchString5, item.Motor_SN);
+    private bool QuickFilterStation6(Station6Result item) => FilterResult(item, searchString6, item.Motor_SN);
+    private bool QuickFilterStation7(Station7Result item) => FilterResult(item, searchString7, item.Motor_SN, item.Mfs_SN);
 
     private bool FilterResult(object item, string searchString, params string[] fieldsToSearch)
     {
@@ -227,4 +1318,61 @@
         }
         return false;
     }
+
+    #region Status coloring metchods
+    private Color GetVisionStatusColor(int? status) => status switch
+    {
+        1 => Color.Success, //OK
+        2 => Color.Error,   //NOK
+        3 => Color.Warning,    //Manual confirmation OK
+        4 => Color.Warning, //Disabled
+        null => Color.Error,
+        _ => Color.Error
+    };
+
+    private string GetVisionStatusText(int? status) => status switch
+    {
+        1 => "OK",
+        2 => "NOK",
+        3 => "MANUAL OK",
+        4 => "DISABLED",
+        null => "UNKNOWN",
+        _ => "UNKNOWN"
+    };
+
+    
+    private string GetScrewStyle(bool status)
+    {
+
+        return status
+            ? "color: var(--mud-palette-success);"
+            : "color: var(--mud-palette-error);";
+
+    }
+
+    private Color GetMainStatusColor(int? status) => status switch
+    {
+        1 => Color.Success, //OK
+        2 => Color.Error,   //NOK
+        >= 3000 and < 4000 => Color.Warning, //Rework
+        4 => Color.Error, //Disabled
+        null => Color.Default,
+        _ => Color.Default
+    };
+
+    private string GetMainStatusText(int? status) => status switch
+    {
+        1 => "OK",
+        2 => "NOK",
+        >= 3000 and < 4000 => "REWORK",
+        4 => "SCRAP",
+        null => "UNKNOWN",
+        _ => "UNKNOWN"
+    };
+
+
+    #endregion
+
 }
+
+

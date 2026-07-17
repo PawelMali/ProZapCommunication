@@ -1,6 +1,13 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@* <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">ProZapCommunication.Web</a>
+        <a class="navbar-brand" href="">Pro-Zap Communication</a>
+        
+
+        <MudText Typo="Typo.overline" Style="color:white;">
+            Version: @BuildDate
+        </MudText>
+
+
     </div>
 </div>
 
@@ -21,5 +28,41 @@
             </NavLink>
         </div>
     </nav>
-</div>
+</div> *@
+<div class="d-flex flex-column" style="height: 100%; min-height: calc(100vh - 64px); position: relative;">
+    
+    @* Górna część: Wersja i linki *@
+    <div>
+        <div class="pa-4">
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Style="font-weight: 500;">
+                Version: @BuildDate
+            </MudText>
+        </div>
 
+        <MudDivider Class="mb-2" />
+
+        <MudNavMenu Class="mud-width-full">
+            <MudNavLink Href="traceability" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ListAlt">
+                Traceability
+            </MudNavLink>
+            
+            <MudNavLink Href="production" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.PrecisionManufacturing">
+                Production
+            </MudNavLink>
+        </MudNavMenu>
+    </div>
+
+    @* Dolna część: Logo idealnie wklejone na dole, dopasowane do szerokości paska *@
+    <div class="pa-4 mt-auto d-flex justify-center align-center"
+         style="background-color: var(--mud-palette-background-grey); border-top: 0px solid var(--mud-palette-divider); width: 100%;">
+        <img src="images/PRO_ZAP_Light2.png" alt="Pro-Zap Logo" style="max-width: 100%; max-height: 100px; object-fit: contain;" />
+    </div>
+
+</div>
+    
+@code {
+    private string BuildDate =>
+        File.GetLastWriteTime(
+            System.Reflection.Assembly.GetExecutingAssembly().Location)
+        .ToString("yyyy-MM-dd HH:mm");
+}

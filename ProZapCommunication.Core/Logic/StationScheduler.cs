@@ -8,7 +8,6 @@ namespace ProZapCommunication.Core.Logic;
 public class StationScheduler
 {
     private readonly int _stationId;
-    private readonly string _stationIdentity;
     private readonly IPlcProvider _plc;
     private CancellationTokenSource _cts;
 
@@ -32,7 +31,6 @@ public class StationScheduler
     public StationScheduler(int stationId, IPlcProvider plc)
     {
         _stationId = stationId;
-      //  _stationIdentity = stationIdentity;
         _plc = plc;
     }
 

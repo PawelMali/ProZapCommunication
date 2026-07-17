@@ -22,6 +22,7 @@ builder.Services.AddScoped<ReportRepository>();
 builder.Services.AddMudServices();
 builder.Services.AddScoped<ExportService>();
 
+
 // 3. Konfiguracja portów, na których aplikacja ma działać w sieci lokalnej
 // Sprawdzamy, czy aplikacja NIE jest uruchomiona w trybie Development (Visual Studio).
 // Jeśli działa jako produkcyjna usługa, wymuszamy konkretny port.

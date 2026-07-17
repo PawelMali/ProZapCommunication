@@ -8,4 +8,5 @@ public abstract class StationResultBase
     public string SN { get; set; } = string.Empty;
     public int SN_Status { get; set; }
     public int CycleTime { get; set; }
+    public int Reference_Number { get; set; }
 }

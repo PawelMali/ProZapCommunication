@@ -8,7 +8,8 @@ public class StationReadBaseModel
     public int TaskConfirmToPc { get; set; }
     public int TaskSuccessCounter { get; set; }
     public int TaskStatus { get; set; }
-    public int Camera_Status { get; set; }
     public string DMC { get; set; } = string.Empty;
+    public string DMCCamera { get; set; } = string.Empty;
+    public int CameraRequest { get; set; }
 
 }

@@ -16,32 +16,6 @@ namespace ProZapCommunication.UI
 
         protected override void OnStartup(StartupEventArgs e)
         {
-
-            bool createdNew;
-
-            _mutex = new Mutex(true, AppName, out createdNew);
-
-            if (!createdNew)
-            {
-                // aplikacja już działa
-                IsForcedShutdown = true;
-                MessageBox.Show("Aplikacja jest już uruchomiona!", "UWAGA!", MessageBoxButton.OK, MessageBoxImage.Warning);
-
-                Shutdown();
-                return;
-            }
-
-
-            if (createdNew)
-            {
-                var mainWindow = new MainWindow();
-                mainWindow.Show();
-            }
-
-
-
-            base.OnStartup(e);
-
             // Pobieramy ścieżkę do folderu z logami w katalogu uruchomieniowym aplikacji
             string logFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
 
@@ -65,13 +39,37 @@ namespace ProZapCommunication.UI
                             rollingInterval: RollingInterval.Day,
                             rollOnFileSizeLimit: true,
                             fileSizeLimitBytes: 10 * 1024 * 1024, // 10 MB
-                            retainedFileCountLimit: 150,
+                            retainedFileCountLimit: 30,
                             outputTemplate: "[{Timestamp:HH:mm:ss.fff} {Level:u3}] {Message:lj}{NewLine}{Exception}"
                         );
                     })
                 .CreateLogger();
 
             Log.Information("Serilog logging system initialized successfully.");
+
+            bool createdNew;
+
+            _mutex = new Mutex(true, AppName, out createdNew);
+
+            if (!createdNew)
+            {
+                // aplikacja już działa
+                IsForcedShutdown = true;
+                MessageBox.Show("Aplikacja jest już uruchomiona!", "UWAGA!", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+                Shutdown();
+                return;
+            }
+
+
+            if (createdNew)
+            {
+                var mainWindow = new MainWindow();
+                mainWindow.Show();
+            }
+
+
+            base.OnStartup(e);
         }
 
         protected override void OnExit(ExitEventArgs e)

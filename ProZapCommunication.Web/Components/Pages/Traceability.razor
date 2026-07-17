@@ -6,6 +6,8 @@
 @inject ISnackbar Snackbar
 @inject ExportService ExportService
 @inject IJSRuntime JS
+@inject IDialogService DialogService
+
 
 <MudText Typo="Typo.h4" Class="mb-6">Traceability Report</MudText>
 
@@ -45,7 +47,12 @@
     <MudCard Elevation="4" Class="mb-6">
         <MudCardHeader>
             <CardHeaderContent>
-                <MudText Typo="Typo.h6">Main Product Card: <b>@report.SN</b></MudText>
+                <MudText Typo="Typo.h6">
+                    Main Product SN:
+                    <MudText Color="Color.Secondary" Inline="true">
+                        <b>@report.SN</b>
+                    </MudText>
+                </MudText>
             </CardHeaderContent>
         </MudCardHeader>
         <MudCardContent>
@@ -67,156 +74,441 @@
     </MudCard>
 
     <div class="mb-4">
-        <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Download"
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Download"
                    OnClick="DownloadExcel" Class="mr-2" Disabled="@(report == null)">Export to Excel</MudButton>
-               
-        <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Description"
-                   OnClick="DownloadCsv" Disabled="@(report == null)">Export to CSV</MudButton>
     </div>
 
-    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" Color="Color.Dark">
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" >
         
         <MudTabPanel Text="Crfm Line (Stations 1-4)" Icon="@Icons.Material.Filled.PrecisionManufacturing">
             
             @if(report.Station1History.Any())
             {
-                <MudText Typo="Typo.h6" Class="mb-2">Station 1 History (Screwing)</MudText>
-                <MudTable Items="@report.Station1History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
-                    <HeaderContent>
-                        <MudTh Style="width: 180px;">Timestamp</MudTh>
-                        <MudTh Style="width: 100px;">Status</MudTh>
-                        <MudTh Style="width: 120px;">Cycle Time</MudTh>
-                        <MudTh>Radiator SN</MudTh>
-                        <MudTh>Torque</MudTh>
-                        <MudTh>Angle</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="Timestamp">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
-                        <MudTd DataLabel="Status">
-                            <MudChip T="string" Color="@(context.SN_Status == 1 ? Color.Success : Color.Error)" Size="Size.Small">
-                                @(context.SN_Status == 1 ? "OK" : "NOK")
-                            </MudChip>
-                        </MudTd>
-                        <MudTd>@context.CycleTime [s]</MudTd>
-                        <MudTd DataLabel="Radiator SN">@context.Radiator_SN</MudTd>
-                        <MudTd DataLabel="Torque">@context.Torque</MudTd>
-                        <MudTd DataLabel="Angle">@context.Angle</MudTd>
-                    </RowTemplate>
-                </MudTable>
+                <MudStack Style="padding-left:10px; padding-right:10px; margin-top:10px;">
+                    <MudPaper Class="pa-2 mb-2" Style="background-color: rgba(var(--mud-palette-primary-rgb), 0.15);">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.h6" Color="Color.Primary">CRFM Station 1 History (Radiator mounting)</MudText>
+@*                             <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Visibility"
+                                       OnClick="OpenVisualizationDialog" Disabled="@(report == null)">Visualization</MudButton> *@
+                        </MudStack>
+                    </MudPaper>
+                    <MudTable Items="@report.Station1History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
+                        <HeaderContent>
+                            <MudTh Class="text-center">Timestamp</MudTh>
+                            <MudTh Class="text-center">Status</MudTh>
+                            <MudTh Class="text-center">Cycle Time</MudTh>
+                            <MudTh Class="text-center">Reference</MudTh>
+                            <MudTh Class="text-center">Radiator SN</MudTh>
+                            <MudTh Class="text-center">Radiator Status</MudTh>
+                            <MudTh Class="text-center">Grommet Left <br /> Bottom Presence <br /> CAM1</MudTh>
+                            <MudTh Class="text-center">Grommet Right <br /> Bottom Presence <br /> CAM2</MudTh>
+                            <MudTh Class="text-center">Radiator Left <br /> Bottom Grommet <br /> CAM1</MudTh>
+                            <MudTh Class="text-center">Radiator Right <br /> Bottom Grommet <br /> CAM2</MudTh>
+                            <MudTh Class="text-center">Stonegrid Bottom <br /> Left Bracket <br /> CAM3</MudTh>
+                            <MudTh Class="text-center">Stonegrid Top <br /> Left Slider <br /> CAM4</MudTh>
+                            <MudTh Class="text-center">Stonegrid Bottom <br /> Right Bracket <br /> CAM5</MudTh>
+                            <MudTh Class="text-center">Stonegrid Top <br /> Right Slider <br /> CAM6</MudTh>
+                            <MudTh Class="text-center">Airduct Left <br /> Middle Slider <br /> CAM4</MudTh>
+                            <MudTh Class="text-center">Airduct Right <br /> Middle Slider <br /> CAM6</MudTh>
+                            <MudTh Class="text-center">Airduct Left <br /> Top Bracket <br /> CAM7</MudTh>
+                            <MudTh Class="text-center">Airduct Right <br /> Top Bracket <br /> CAM8</MudTh>
+                            <MudTh Class="text-center">Airduct Left <br /> Top Balcony <br /> CAM9</MudTh>
+                            <MudTh Class="text-center">Airduct Right <br /> Top Balcony <br /> CAM10</MudTh>
+                            <MudTh Class="text-center">Airduct Middle <br /> Bottom Ridge <br /> CAM11</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Timestamp" Class="text-center">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+                            <MudTd DataLabel="Status" Class="text-center">
+                                <MudChip T="string" Color="@GetMainStatusColor(context.SN_Status)" Size="Size.Small">
+                                    @GetMainStatusText(context.SN_Status) | @context.SN_Status
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Cycle time" Class="text-center">@context.CycleTime s</MudTd>
+                            <MudTd DataLabel="Reference" Class="text-center">@context.Reference_Number</MudTd>
+                            <MudTd DataLabel="Radiator SN" Class="text-center">@context.Radiator_SN</MudTd>
+                            <MudTd DataLabel="Radiator Status" Class="text-center">
+                                <MudChip T="string" Color="@GetMainStatusColor(context.Radiator_Status)" Size="Size.Small">
+                                    @GetMainStatusText(context.Radiator_Status) | @context.Radiator_Status
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Grommet Left Bottom Presence CAM1" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Grommet_Left_Bottom_Presence_Cam_1_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Grommet_Left_Bottom_Presence_Cam_1_Status) | @context.Grommet_Left_Bottom_Presence_Cam_1_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Grommet Right Bottom Presence CAM2" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Grommet_Right_Bottom_Presence_Cam_2_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Grommet_Right_Bottom_Presence_Cam_2_Status) | @context.Grommet_Right_Bottom_Presence_Cam_2_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Radiator Left Bottom Grommet CAM1" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Radiator_Left_Bottom_Grommet_Cam_1_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Radiator_Left_Bottom_Grommet_Cam_1_Status) | @context.Radiator_Left_Bottom_Grommet_Cam_1_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Radiator Right Bottom Grommet CAM2" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Radiator_Right_Bottom_Grommet_Cam_2_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Radiator_Right_Bottom_Grommet_Cam_2_Status) | @context.Radiator_Right_Bottom_Grommet_Cam_2_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Stonegrid Bottom Left Bracket CAM3" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Stonegrid_Bottom_Left_Bracket_Cam_3_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Stonegrid_Bottom_Left_Bracket_Cam_3_Status) | @context.Stonegrid_Bottom_Left_Bracket_Cam_3_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Stonegrid Top Left Slider CAM4" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Stonegrid_Top_Left_Slider_Cam_4_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Stonegrid_Top_Left_Slider_Cam_4_Status) | @context.Stonegrid_Top_Left_Slider_Cam_4_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Stonegrid Bottom Right Bracket CAM5" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Stonegrid_Bottom_Right_Bracket_Cam_5_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Stonegrid_Bottom_Right_Bracket_Cam_5_Status) | @context.Stonegrid_Bottom_Right_Bracket_Cam_5_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Stonegrid Top Right Slider CAM6" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Stonegrid_Top_Right_Slider_Cam_6_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Stonegrid_Top_Right_Slider_Cam_6_Status) | @context.Stonegrid_Top_Right_Slider_Cam_6_Counter
+                                </MudChip> 
+                            </MudTd>
+                            <MudTd DataLabel="Airduct Left Middle Slider CAM4" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Airduct_Left_Middle_Slider_Cam_4_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Airduct_Left_Middle_Slider_Cam_4_Status) | @context.Airduct_Left_Middle_Slider_Cam_4_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Airduct Right Middle Slider CAM6" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Airduct_Right_Middle_Slider_Cam_6_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Airduct_Right_Middle_Slider_Cam_6_Status) | @context.Airduct_Right_Middle_Slider_Cam_6_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Airduct Left Top Bracket CAM7" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Airduct_Left_Top_Bracket_Cam_7_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Airduct_Left_Top_Bracket_Cam_7_Status) | @context.Airduct_Left_Top_Bracket_Cam_7_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Airduct Right Top Bracket CAM8" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Airduct_Right_Top_Bracket_Cam_8_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Airduct_Right_Top_Bracket_Cam_8_Status) | @context.Airduct_Right_Top_Bracket_Cam_8_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Airduct Left Top Balcony CAM9" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Airduct_Left_Top_Balcony_Cam_9_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Airduct_Left_Top_Balcony_Cam_9_Status) | @context.Airduct_Left_Top_Balcony_Cam_9_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Airduct Right Top Balcony CAM10" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Airduct_Right_Top_Balcony_Cam_10_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Airduct_Right_Top_Balcony_Cam_10_Status) | @context.Airduct_Right_Top_Balcony_Cam_10_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Airduct Middle Bottom Ridge CAM11" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Airduct_Middle_Bottom_Ridge_Cam_11_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Airduct_Middle_Bottom_Ridge_Cam_11_Status) | @context.Airduct_Middle_Bottom_Ridge_Cam_11_Counter
+                                </MudChip>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudStack>
             }
+
+
 
             @if(report.Station2History.Any())
             {
-                <MudText Typo="Typo.h6" Class="mb-2">Station 2 History (Leak Test & Mating)</MudText>
-                <MudTable Items="@report.Station2History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
-                    <HeaderContent>
-                        <MudTh Style="width: 180px;">Timestamp</MudTh>
-                        <MudTh Style="width: 100px;">Status</MudTh>
-                        <MudTh Style="width: 120px;">Cycle Time</MudTh>
-                        <MudTh>Pressure</MudTh>
-                        <MudTh>Test Time [s]</MudTh>
-                        <MudTh>Leak</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="Timestamp">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
-                        <MudTd DataLabel="Status">
-                            <MudChip T="string" Color="@(context.SN_Status == 1 ? Color.Success : Color.Error)" Size="Size.Small">
-                                @(context.SN_Status == 1 ? "OK" : "NOK")
-                            </MudChip>
-                        </MudTd>
-                        <MudTd>@context.CycleTime [s]</MudTd>
-                        <MudTd DataLabel="Mfs SN">@context.Mfs_SN</MudTd>
-                        <MudTd DataLabel="Pressure">@context.Preasure</MudTd> 
-                        <MudTd DataLabel="Test Time">@context.TestTime</MudTd>
-                        <MudTd DataLabel="Leak">@context.Leak</MudTd>
-                    </RowTemplate>
-                </MudTable>
+                <MudStack Style="padding-left:10px; padding-right:10px; margin-top:10px;">
+                    <MudPaper Class="pa-2 mb-2" Style="background-color: rgba(var(--mud-palette-primary-rgb), 0.15);">
+                        <MudText Typo="Typo.h6" Color="Color.Primary">CRFM Station 2 History (MFS mounting)</MudText>
+                    </MudPaper>
+                    <MudTable Items="@report.Station2History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
+                        <HeaderContent>
+                            <MudTh Class="text-center">Timestamp</MudTh>
+                            <MudTh Class="text-center">Status</MudTh>
+                            <MudTh Class="text-center">Cycle Time</MudTh>
+                            <MudTh Class="text-center">Reference</MudTh>
+                            <MudTh Class="text-center">MFS SN</MudTh>
+                            <MudTh Class="text-center">MFS Status</MudTh>
+                            <MudTh Class="text-center">MFS Left <br /> Bottom Balcony <br /> CAM1</MudTh>
+                            <MudTh Class="text-center">MFS Left <br /> Middle Guide <br /> CAM2</MudTh>
+                            <MudTh Class="text-center">MFS Left <br /> Top Bracket <br /> CAM3</MudTh>
+                            <MudTh Class="text-center">MFS Middle <br /> Top Ridge <br /> CAM4</MudTh>
+                            <MudTh Class="text-center">MFS Right <br /> Top Bracket <br /> CAM5</MudTh>
+                            <MudTh Class="text-center">MFS Right <br /> Middle Guide <br /> CAM6</MudTh>
+                            <MudTh Class="text-center">MFS Right <br /> Bottom Balcony <br /> CAM7</MudTh>
+                            <MudTh Class="text-center">Radiator Left <br /> Top Grommet <br /> CAM8</MudTh>
+                            <MudTh Class="text-center">Radiator Right <br /> Top Grommet <br /> CAM9</MudTh>
+                            <MudTh Class="text-center">Shipping Caps <br /> Disassembly</MudTh>
+
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Timestamp" Class="text-center">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+                            <MudTd DataLabel="Status" Class="text-center">
+                                <MudChip T="string" Color="@GetMainStatusColor(context.SN_Status)" Size="Size.Small">
+                                    @GetMainStatusText(context.SN_Status) | @context.SN_Status
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Cycle time" Class="text-center">@context.CycleTime s</MudTd>
+                            <MudTd DataLabel="Reference" Class="text-center">@context.Reference_Number</MudTd>
+                            <MudTd DataLabel="MFS SN" Class="text-center">@context.MFS_SN</MudTd>
+                            <MudTd DataLabel="MFS Status" Class="text-center">
+                                <MudChip T="string" Color="@GetMainStatusColor(context.MFS_Status)" Size="Size.Small">
+                                    @GetMainStatusText(context.MFS_Status) | @context.MFS_Status
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="MFS Left Bottom Balcony CAM1" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.MFS_Left_Bottom_Balcony_Cam_1_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.MFS_Left_Bottom_Balcony_Cam_1_Status) | @context.MFS_Left_Bottom_Balcony_Cam_1_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="MFS Left Middle Guide CAM2" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.MFS_Left_Middle_Guide_Cam_2_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.MFS_Left_Middle_Guide_Cam_2_Status) | @context.MFS_Left_Middle_Guide_Cam_2_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="MFS Left Top Bracket CAM3" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.MFS_Left_Top_Bracket_Cam_3_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.MFS_Left_Top_Bracket_Cam_3_Status) | @context.MFS_Left_Top_Bracket_Cam_3_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="MFS Middle Top Ridge CAM4" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.MFS_Middle_Top_Ridge_Cam_4_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.MFS_Middle_Top_Ridge_Cam_4_Status) | @context.MFS_Middle_Top_Ridge_Cam_4_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="MFS Right Top Bracket CAM5" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.MFS_Right_Top_Bracket_Cam_5_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.MFS_Right_Top_Bracket_Cam_5_Status) | @context.MFS_Right_Top_Bracket_Cam_5_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="MFS Right Middle Guide CAM6" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.MFS_Right_Middle_Guide_Cam_6_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.MFS_Right_Middle_Guide_Cam_6_Status) | @context.MFS_Right_Middle_Guide_Cam_6_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="MFS Right Bottom Balcony CAM7" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.MFS_Right_Bottom_Balcony_Cam_7_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.MFS_Right_Bottom_Balcony_Cam_7_Status) | @context.MFS_Right_Bottom_Balcony_Cam_7_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Radiator Left Top Grommet CAM8" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Radiator_Left_Top_Grommet_Cam_8_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Radiator_Left_Top_Grommet_Cam_8_Status) | @context.Radiator_Left_Top_Grommet_Cam_8_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Radiator Right Top Grommet CAM9" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Radiator_Right_Top_Grommet_Cam_9_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Radiator_Right_Top_Grommet_Cam_9_Status) | @context.Radiator_Right_Top_Grommet_Cam_9_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Shipping Caps Disassembly" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Shipping_Caps_Disassembly_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Shipping_Caps_Disassembly_Status) | @context.Shipping_Caps_Disassembly_Counter
+                                </MudChip>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudStack>
             }
 
             @if(report.Station3History.Any())
             {
-                <MudText Typo="Typo.h6" Class="mb-2">Station 3 History (Vision System)</MudText>
-                <MudTable Items="@report.Station3History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
-                    <HeaderContent>
-                        <MudTh Style="width: 180px;">Timestamp</MudTh>
-                        <MudTh Style="width: 100px;">Status</MudTh>
-                        <MudTh Style="width: 120px;">Cycle Time</MudTh>
-                        <MudTh>Vision 1 Status</MudTh>
-                        <MudTh>Vision 2 Status</MudTh>
-                        <MudTh>Vision 3 Status</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="Timestamp">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
-                        <MudTd DataLabel="Main Status">
-                            <MudChip T="string" Color="@(context.SN_Status == 1 ? Color.Success : Color.Error)" Size="Size.Small">
-                                @(context.SN_Status == 1 ? "OK" : "NOK")
-                            </MudChip>
-                        </MudTd>
-                        <MudTd>@context.CycleTime [s]</MudTd>
-                        <MudTd DataLabel="Vision 1">@(context.Vision1Status == 1 ? "Pass" : "Fail")</MudTd>
-                        <MudTd DataLabel="Vision 2">@(context.Vision2Status == 1 ? "Pass" : "Fail")</MudTd>
-                        <MudTd DataLabel="Vision 3">@(context.Vision3Status == 1 ? "Pass" : "Fail")</MudTd>
-                    </RowTemplate>
-                </MudTable>
+                <MudStack Style="padding-left:10px; padding-right:10px; margin-top:10px;">
+                    <MudPaper Class="pa-2 mb-2" Style="background-color: rgba(var(--mud-palette-primary-rgb), 0.15);">
+                        <MudText Typo="Typo.h6" Color="Color.Primary">CRFM Station 3 History (Leak test)</MudText>
+                    </MudPaper>
+                    <MudTable Items="@report.Station3History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
+                        <HeaderContent>
+                            <MudTh Class="text-center">Timestamp</MudTh>
+                            <MudTh Class="text-center">Status</MudTh>
+                            <MudTh Class="text-center">Cycle Time</MudTh>
+                            <MudTh Class="text-center">Reference</MudTh>
+                            <MudTh Class="text-center">Leak test status</MudTh>
+                            <MudTh Class="text-center">Method</MudTh>
+                            <MudTh Class="text-center">Program Number</MudTh>
+                            <MudTh Class="text-center">Pressure</MudTh>
+                            <MudTh Class="text-center">Pressure Drop</MudTh>
+                            <MudTh Class="text-center">Leak Rate</MudTh>
+                            <MudTh Class="text-center">Temperature</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Timestamp" Class="text-center">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+                            <MudTd DataLabel="Status" Class="text-center">
+                                <MudChip T="string" Color="@GetMainStatusColor(context.SN_Status)" Size="Size.Small">
+                                    @GetMainStatusText(context.SN_Status) | @context.SN_Status
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Cycle time" Class="text-center">@context.CycleTime s</MudTd>
+                            <MudTd DataLabel="Reference" Class="text-center">@context.Reference_Number</MudTd>
+                            <MudTd DataLabel="Leak Test Status" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.LeakTest_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.LeakTest_Status) | @context.LeakTest_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Method" Class="text-center">@GetLeakMethodStatusText(context.LeakTest_Method)</MudTd>
+                            <MudTd DataLabel="Program Number" Class="text-center">@context.LeakTest_Program_Number</MudTd>
+                            <MudTd DataLabel="Pressure" Class="text-center">@context.LeakTest_Pressure mPa</MudTd>
+                            <MudTd DataLabel="Pressure Drop" Class="text-center">@context.LeakTest_Pressure_Drop mPa</MudTd>
+                            <MudTd DataLabel="Leak Rate" Class="text-center">@context.LeakTest_Leak_Rate μL/min</MudTd>
+                            <MudTd DataLabel="Temperature" Class="text-center">@context.LeakTest_Temperature mKelvin</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudStack>
             }
 
             @if(report.Station4History.Any())
             {
-                <MudText Typo="Typo.h6" Class="mb-2">Station 4 History (Gluing & Weight)</MudText>
-                <MudTable Items="@report.Station4History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
-                    <HeaderContent>
-                        <MudTh Style="width: 180px;">Timestamp</MudTh>
-                        <MudTh Style="width: 100px;">Status</MudTh>
-                        <MudTh Style="width: 120px;">Cycle Time</MudTh>
-                        <MudTh>Temperature</MudTh>
-                        <MudTh>Glue Type</MudTh>
-                        <MudTh>Weight</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="Timestamp">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
-                        <MudTd DataLabel="Status">
-                            <MudChip T="string" Color="@(context.SN_Status == 1 ? Color.Success : Color.Error)" Size="Size.Small">
-                                @(context.SN_Status == 1 ? "OK" : "NOK")
-                            </MudChip>
-                        </MudTd>
-                        <MudTd>@context.CycleTime [s]</MudTd>
-                        <MudTd DataLabel="Temperature">@context.Temperature</MudTd>
-                        <MudTd DataLabel="Glue Type">@context.GlueTupe</MudTd>
-                        <MudTd DataLabel="Weight">@context.Weight</MudTd>
-                    </RowTemplate>
-                </MudTable>
+                <MudStack Style="padding-left:10px; padding-right:10px; margin-top:10px;">
+                    <MudPaper Class="pa-2 mb-2" Style="background-color: rgba(var(--mud-palette-primary-rgb), 0.15);">
+                        <MudText Typo="Typo.h6" Color="Color.Primary">CRFM Station 4 History (Final assembly)</MudText>
+                    </MudPaper>
+                    <MudTable Items="@report.Station4History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
+                        <HeaderContent>
+                            <MudTh Class="text-center">Timestamp</MudTh>
+                            <MudTh Class="text-center">Status</MudTh>
+                            <MudTh Class="text-center">Cycle Time</MudTh>
+                            <MudTh Class="text-center">Reference</MudTh>
+                            <MudTh Class="text-center">Shipping Caps Assembly</MudTh>
+                            <MudTh Class="text-center">Print Counter</MudTh>
+                            <MudTh Class="text-center">DMC Quality Content</MudTh>
+                            <MudTh Class="text-center">DMC Quality Grade</MudTh>
+                            <MudTh Class="text-center">DMC Quality Results</MudTh>
+                            <MudTh Class="text-center">OCR Homologation Part Number</MudTh>
+                            <MudTh Class="text-center">OCR Supplier</MudTh>
+                            <MudTh Class="text-center">OCR Country Of Origin</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Timestamp" Class="text-center">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+                            <MudTd DataLabel="Status" Class="text-center">
+                                <MudChip T="string" Color="@GetMainStatusColor(context.SN_Status)" Size="Size.Small">
+                                    @GetMainStatusText(context.SN_Status) | @context.SN_Status
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Cycle time" Class="text-center">@context.CycleTime s</MudTd>
+                            <MudTd DataLabel="Reference" Class="text-center">@context.Reference_Number</MudTd>
+                            <MudTd DataLabel="Shipping Caps Assembly" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Shipping_Caps_Assembly_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Shipping_Caps_Assembly_Status) | @context.Shipping_Caps_Assembly_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Print Counter" Class="text-center">@context.Print_Counter</MudTd>
+                            <MudTd DataLabel="DMC Quality Content" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.DMC_Quality_Content_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.DMC_Quality_Content_Status) | @context.DMC_Quality_Content_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="DMC Quality Grade" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.DMC_Quality_Grade_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.DMC_Quality_Grade_Status) | @context.DMC_Quality_Grade_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="DMC Quality Results" Class="text-center">
+                                <MudChip T="string" Color="@GetQrQualityColor(context.DMC_Quality_Grade_Result[0])" Size="Size.Small">
+                                    @context.DMC_Quality_Grade_Result
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="OCR Homologation Part Number" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.DMC_OCR_Homologation_Part_Number_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.DMC_OCR_Homologation_Part_Number_Status) | @context.DMC_OCR_Homologation_Part_Number_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="OCR Supplier" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.DMC_OCR_Supplier_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.DMC_OCR_Supplier_Status) | @context.DMC_OCR_Supplier_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="OCR Country Of Origin" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.DMC_OCR_Country_Of_Origin_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.DMC_OCR_Country_Of_Origin_Status) | @context.DMC_OCR_Country_Of_Origin_Counter
+                                </MudChip>
+                            </MudTd>
+
+
+                        </RowTemplate>
+                    </MudTable>
+                </MudStack>
             }
 
         </MudTabPanel>
 
-        <MudTabPanel Text="Mfs-assembly (Stations 5-7)" Icon="@Icons.Material.Filled.Settings" Disabled="@(string.IsNullOrEmpty(report.Motor_SN))">
+        <MudTabPanel Text="Mfs-assembly (Stations 5-7)" Icon="@Icons.Custom.Uncategorized.Radioactive" Disabled="@(string.IsNullOrEmpty(report.Motor_SN))">
             
             @if(report.Station5History.Any())
             {
-                <MudText Typo="Typo.h6" Class="mb-2">Station 5 History</MudText>
-                <MudTable Items="@report.Station5History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
-                    <HeaderContent>
-                        <MudTh Style="width: 180px;">Timestamp</MudTh>
-                        <MudTh Style="width: 100px;">Status</MudTh>
-                        <MudTh Style="width: 120px;">Cycle Time</MudTh>
-                        <MudTh>Motor SN</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="Timestamp">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
-                        <MudTd DataLabel="Status">
-                            <MudChip T="string" Color="@(context.Motor_Status == 1 ? Color.Success : Color.Error)" Size="Size.Small">
-                                @(context.Motor_Status == 1 ? "OK" : "NOK")
-                            </MudChip>
-                        </MudTd>
-                        <MudTd>@context.CycleTime [s]</MudTd>
-                        <MudTd DataLabel="Motor SN">@context.Motor_SN</MudTd>
-                    </RowTemplate>
-                </MudTable>
+
+                <MudStack Style="padding-left:10px; padding-right:10px; margin-top:10px;">
+                    <MudPaper Class="pa-2 mb-2" Style="background-color: rgba(var(--mud-palette-primary-rgb), 0.15);">
+                        <MudText Typo="Typo.h6" Color="Color.Primary">MFS Station 1 History (Motor assembly)</MudText>
+                    </MudPaper>
+                    <MudTable Items="@report.Station5History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
+                        <HeaderContent>
+                            <MudTh Class="text-center">Timestamp</MudTh>
+                            <MudTh Class="text-center">Status</MudTh>
+                            <MudTh Class="text-center">Motor SN</MudTh>
+                            <MudTh Class="text-center">Cycle Time</MudTh>
+                            <MudTh Class="text-center">Reference</MudTh>
+                            <MudTh Class="text-center">Motor Inspection</MudTh>
+                            <MudTh Class="text-center">Fan Inspection</MudTh>
+                            <MudTh Class="text-center">Screw 1 Results</MudTh>
+                            <MudTh Class="text-center">Screw 1 Program</MudTh>
+                            <MudTh Class="text-center">Screw 1 Counter</MudTh>
+                            <MudTh Class="text-center">Screw 2 Results</MudTh>
+                            <MudTh Class="text-center">Screw 2 Program</MudTh>
+                            <MudTh Class="text-center">Screw 2 Counter</MudTh>
+                            <MudTh Class="text-center">Screw 3 Results</MudTh>
+                            <MudTh Class="text-center">Screw 3 Program</MudTh>
+                            <MudTh Class="text-center">Screw 3 Counter</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Timestamp" Class="text-center">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+                            <MudTd DataLabel="Status" Class="text-center">
+                                <MudChip T="string" Color="@GetMainStatusColor(context.Motor_Inspection_Status)" Size="Size.Small">
+                                    @GetMainStatusText(context.Motor_Inspection_Status) | @context.Motor_Inspection_Status
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Motor SN" Class="text-center">@context.Motor_SN</MudTd>
+                            <MudTd DataLabel="Cycle time" Class="text-center">@context.CycleTime s</MudTd>
+                            <MudTd DataLabel="Reference" Class="text-center">@context.Reference_Number</MudTd>
+                            <MudTd DataLabel="Motor Inspection" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Motor_Inspection_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Motor_Inspection_Status) | @context.Motor_Inspection_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Fan Inspection" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Fan_Inspection_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Fan_Inspection_Status) | @context.Fan_Inspection_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Screw 1" Class="text-center">
+                                <MudPaper Class="pa-2" Elevation="0" Style="@GetScrewStyle(context.Screw1_Status)">
+                                    <div class="fw-bold" style="white-space: nowrap;">@context.Screw1_Torque Nm</div>
+                                    <div class="fw-bold" style="white-space: nowrap;">@context.Screw1_Angle°</div>
+                                </MudPaper>
+                            </MudTd>
+                            <MudTd DataLabel="Screw 1 Program" Class="text-center">@context.Screw1_Program_Number</MudTd>
+                            <MudTd DataLabel="Screw 1 Counter" Class="text-center">@context.Screw1_Counter</MudTd>
+                            <MudTd DataLabel="Screw 2" Class="text-center">
+                                <MudPaper Class="pa-2" Elevation="0" Style="@GetScrewStyle(context.Screw2_Status)">
+                                    <div class="fw-bold" style="white-space: nowrap;">@context.Screw2_Torque Nm</div>
+                                    <div class="fw-bold" style="white-space: nowrap;">@context.Screw2_Angle°</div>
+                                </MudPaper>
+                            </MudTd>
+                            <MudTd DataLabel="Screw 2 Program" Class="text-center">@context.Screw2_Program_Number</MudTd>
+                            <MudTd DataLabel="Screw 2 Counter" Class="text-center">@context.Screw2_Counter</MudTd>
+                            <MudTd DataLabel="Screw 3" Class="text-center">
+                                <MudPaper Class="pa-2" Elevation="0" Style="@GetScrewStyle(context.Screw3_Status)">
+                                    <div class="fw-bold" style="white-space: nowrap;">@context.Screw3_Torque Nm</div>
+                                    <div class="fw-bold" style="white-space: nowrap;">@context.Screw3_Angle°</div>
+                                </MudPaper>
+                            </MudTd>
+                            <MudTd DataLabel="Screw 3 Program" Class="text-center">@context.Screw3_Program_Number</MudTd>
+                            <MudTd DataLabel="Screw 3 Counter" Class="text-center">@context.Screw3_Counter</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudStack>
             }
 
             @if(report.Station6History.Any())
             {
-                <MudText Typo="Typo.h6" Class="mb-2">Station 6 History</MudText>
+                <MudText Typo="Typo.h6" Class="mb-2">MFS Station 2 History (Balancing)</MudText>
                 <MudTable Items="@report.Station6History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
                     <HeaderContent>
                         <MudTh Style="width: 180px;">Timestamp</MudTh>
@@ -231,7 +523,7 @@
                                 @(context.Motor_Status == 1 ? "OK" : "NOK")
                             </MudChip>
                         </MudTd>
-                        <MudTd>@context.CycleTime [s]</MudTd>
+                        <MudTd>@context.CycleTime s</MudTd>
                         <MudTd DataLabel="Motor SN">@context.Motor_SN</MudTd>
                     </RowTemplate>
                 </MudTable>
@@ -239,27 +531,129 @@
 
             @if(report.Station7History.Any())
             {
-                <MudText Typo="Typo.h6" Class="mb-2">Station 7 History (Mfs SN Assignment)</MudText>
-                <MudTable Items="@report.Station7History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
-                    <HeaderContent>
-                        <MudTh Style="width: 180px;">Timestamp</MudTh>
-                        <MudTh Style="width: 100px;">Status</MudTh>
-                        <MudTh Style="width: 120px;">Cycle Time</MudTh>
-                        <MudTh>Motor SN</MudTh>
-                        <MudTh>Mfs SN</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="Timestamp">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
-                        <MudTd DataLabel="Status">
-                            <MudChip T="string" Color="@(context.Motor_Status == 1 ? Color.Success : Color.Error)" Size="Size.Small">
-                                @(context.Motor_Status == 1 ? "OK" : "NOK")
-                            </MudChip>
-                        </MudTd>
-                        <MudTd>@context.CycleTime [s]</MudTd>
-                        <MudTd DataLabel="Motor SN">@context.Motor_SN</MudTd>
-                        <MudTd DataLabel="Mfs SN">@context.Mfs_SN</MudTd>
-                    </RowTemplate>
-                </MudTable>
+                <MudStack Style="padding-left:10px; padding-right:10px; margin-top:10px;">
+                    <MudPaper Class="pa-2 mb-2" Style="background-color: rgba(var(--mud-palette-primary-rgb), 0.15);">
+                        <MudText Typo="Typo.h6" Color="Color.Primary">MFS Station 3 History (Final assembly)</MudText>
+                    </MudPaper>
+                    <MudTable Items="@report.Station7History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
+                        <HeaderContent>
+                            <MudTh Class="text-center">Timestamp</MudTh>
+                            <MudTh Class="text-center">Status</MudTh>
+                            <MudTh Class="text-center">Motor SN</MudTh>
+                            <MudTh Class="text-center">MFS SN</MudTh>
+                            <MudTh Class="text-center">Cycle Time</MudTh>
+                            <MudTh Class="text-center">Reference</MudTh>
+                            <MudTh Class="text-center">Shraud Inspection</MudTh>
+                            <MudTh Class="text-center">Cable Inspection</MudTh>
+                            <MudTh Class="text-center">Plug Inspection</MudTh>
+                            <MudTh Class="text-center">Shipping Cap Inspection</MudTh>
+                            <MudTh Class="text-center">Print Counter</MudTh>
+                            <MudTh Class="text-center">DMC Quality Content</MudTh>
+                            <MudTh Class="text-center">DMC Quality Grade</MudTh>
+                            <MudTh Class="text-center">DMC Quality Results</MudTh>
+                            <MudTh Class="text-center">OCR Homologation Part Number</MudTh>
+                            <MudTh Class="text-center">OCR Supplier</MudTh>
+                            <MudTh Class="text-center">OCR Country Of Origin</MudTh>
+                            <MudTh Class="text-center">Screw 1 Results</MudTh>
+                            <MudTh Class="text-center">Screw 1 Program</MudTh>
+                            <MudTh Class="text-center">Screw 1 Counter</MudTh>
+                            <MudTh Class="text-center">Screw 2 Results</MudTh>
+                            <MudTh Class="text-center">Screw 2 Program</MudTh>
+                            <MudTh Class="text-center">Screw 2 Counter</MudTh>
+                            <MudTh Class="text-center">Screw 3 Results</MudTh>
+                            <MudTh Class="text-center">Screw 3 Program</MudTh>
+                            <MudTh Class="text-center">Screw 3 Counter</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Timestamp" Class="text-center">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+                            <MudTd DataLabel="Status" Class="text-center">
+                                <MudChip T="string" Color="@GetMainStatusColor(context.Motor_Status)" Size="Size.Small">
+                                    @GetMainStatusText(context.Motor_Status) | @context.Motor_Status
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Motor SN" Class="text-center">@context.Motor_SN</MudTd>
+                            <MudTd DataLabel="MFS SN" Class="text-center">@context.Mfs_SN</MudTd>
+                            <MudTd DataLabel="Cycle time" Class="text-center">@context.CycleTime s</MudTd>
+                            <MudTd DataLabel="Reference" Class="text-center">@context.Reference_Number</MudTd>
+                            <MudTd DataLabel="Shraud Inspection" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Shraud_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Shraud_Status) | @context.Shraud_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Cable Inspection" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Cable_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Cable_Status) | @context.Cable_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Plug Inspection" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Plug_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Plug_Status) | @context.Plug_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Shipping Cap Inspection" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.Shipping_Cap_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.Shipping_Cap_Status) | @context.Shipping_Cap_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Print Counter" Class="text-center">@context.Print_Counter</MudTd>
+                            <MudTd DataLabel="DMC Quality Content" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.DMC_Quality_Content_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.DMC_Quality_Content_Status) | @context.DMC_Quality_Content_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="DMC Quality Grade" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.DMC_Quality_Grade_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.DMC_Quality_Grade_Status) | @context.DMC_Quality_Grade_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="DMC Quality Results" Class="text-center">
+                                <MudChip T="string" Color="@GetQrQualityColor(context.DMC_Quality_Grade_Result[0])" Size="Size.Small">
+                                    @context.DMC_Quality_Grade_Result
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="OCR Homologation Part Number" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.DMC_OCR_Homologation_Part_Number_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.DMC_OCR_Homologation_Part_Number_Status) | @context.DMC_OCR_Homologation_Part_Number_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="OCR Supplier" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.DMC_OCR_Supplier_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.DMC_OCR_Supplier_Status) | @context.DMC_OCR_Supplier_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="OCR Country Of Origin" Class="text-center">
+                                <MudChip T="string" Color="@GetVisionStatusColor(context.DMC_OCR_Country_Of_Origin_Status)" Size="Size.Small">
+                                    @GetVisionStatusText(context.DMC_OCR_Country_Of_Origin_Status) | @context.DMC_OCR_Country_Of_Origin_Counter
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Screw 1" Class="text-center">
+                                <MudPaper Class="pa-2" Elevation="0" Style="@GetScrewStyle(context.Screw1_Status)">
+                                    <div class="fw-bold" style="white-space: nowrap;">@context.Screw1_Torque Nm</div>
+                                    <div class="fw-bold" style="white-space: nowrap;">@context.Screw1_Angle°</div>
+                                </MudPaper>
+                            </MudTd>
+                            <MudTd DataLabel="Screw 1 Program" Class="text-center">@context.Screw1_Program_Number</MudTd>
+                            <MudTd DataLabel="Screw 1 Counter" Class="text-center">@context.Screw1_Counter</MudTd>
+                            <MudTd DataLabel="Screw 2" Class="text-center">
+                                <MudPaper Class="pa-2" Elevation="0" Style="@GetScrewStyle(context.Screw2_Status)">
+                                    <div class="fw-bold" style="white-space: nowrap;">@context.Screw2_Torque Nm</div>
+                                    <div class="fw-bold" style="white-space: nowrap;">@context.Screw2_Angle°</div>
+                                </MudPaper>
+                            </MudTd>
+                            <MudTd DataLabel="Screw 2 Program" Class="text-center">@context.Screw2_Program_Number</MudTd>
+                            <MudTd DataLabel="Screw 2 Counter" Class="text-center">@context.Screw2_Counter</MudTd>
+                            <MudTd DataLabel="Screw 3 Class="text-center">
+                                <MudPaper Class="pa-2" Elevation="0" Style="@GetScrewStyle(context.Screw3_Status)">
+                                    <div class="fw-bold" style="white-space: nowrap;">@context.Screw3_Torque Nm</div>
+                                    <div class="fw-bold" style="white-space: nowrap;">@context.Screw3_Angle°</div>
+                                </MudPaper>
+                            </MudTd>
+                            <MudTd DataLabel="Screw 3 Program" Class="text-center">@context.Screw3_Program_Number</MudTd>
+                            <MudTd DataLabel="Screw 3 Counter" Class="text-center">@context.Screw3_Counter</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudStack>
+
             }
 
         </MudTabPanel>
@@ -330,14 +724,101 @@
         Snackbar.Add("Excel file downloaded successfully.", Severity.Success);
     }
 
-    private async Task DownloadCsv()
+    private async Task OpenVisualizationDialog()
     {
         if (report == null) return;
 
-        var fileBytes = ExportService.ExportToCsv(report);
-        var fileName = $"Traceability_{report.SN}.csv";
+        // Przekazujemy raport jako parametr do okna dialogowego
+        var parameters = new DialogParameters<VisualizationDialog>
+    {
+        { x => x.Report, report }
+    };
 
-        await JS.InvokeVoidAsync("downloadFileFromBytes", fileName, Convert.ToBase64String(fileBytes));
-        Snackbar.Add("CSV file downloaded successfully.", Severity.Success);
+        // Konfigurujemy opcje wyświetlania popupa (szerokość dostosowana pod obrazek 800px)
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseButton = true,
+            BackdropClick = true
+        };
+
+        await DialogService.ShowAsync<VisualizationDialog>("Component Visualization", parameters, options);
     }
+
+
+
+    # region Status coloring metchods
+    private Color GetVisionStatusColor(int? status) => status switch
+    {
+        1 => Color.Success, //OK
+        2 => Color.Error,   //NOK
+        3 => Color.Warning,    //Manual confirmation OK
+        4 => Color.Warning, //Disabled
+        null => Color.Error,
+        _ => Color.Error
+    };
+
+    private string GetVisionStatusText(int? status) => status switch
+    {
+        1 => "OK",
+        2 => "NOK",
+        3 => "MANUAL OK",
+        4 => "DISABLED",
+        null => "UNKNOWN",
+        _ => "UNKNOWN"
+    };
+
+    private string GetLeakMethodStatusText(int? status) => status switch
+    {
+        1 => "Pressure difference",
+        2 => "Leakrate",
+        null => "UNKNOWN",
+        _ => "UNKNOWN"
+    };
+
+    private string GetScrewStyle(int? status) => status switch
+    {
+        1 => "color: var(--mud-palette-success);",
+        2 => "color: var(--mud-palette-error);",
+        null => "color: var(--mud-palette-error);",
+        _ => "color: var(--mud-palette-error);"
+    };  
+    
+    private Color GetQrQualityColor(char quality)
+    {
+        return quality switch
+        {
+            'A' => Color.Success,
+            'B' => Color.Success,
+            'C' => Color.Warning,
+            'D' => Color.Warning,
+            'E' => Color.Error,
+            _ => Color.Error,
+        };
+    }
+
+    private Color GetMainStatusColor(int? status) => status switch
+    {
+        1 => Color.Success, //OK
+        2 => Color.Error,   //NOK
+        >= 3000 and < 4000 => Color.Warning, //Rework
+        4 => Color.Error, //Disabled
+        null => Color.Default,
+        _ => Color.Default
+    };
+
+    private string GetMainStatusText(int? status) => status switch
+    {
+        1 => "OK",
+        2 => "NOK",
+        >= 3000 and < 4000 => "REWORK",
+        4 => "SCRAP",
+        null => "UNKNOWN",
+        _ => "UNKNOWN"
+    };
+
+
+    #endregion
+
 }

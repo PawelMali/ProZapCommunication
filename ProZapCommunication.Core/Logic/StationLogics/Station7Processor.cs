@@ -74,27 +74,27 @@ public class Station7Processor : StationProcessorBase
             }
 
 
-            if ( currentResult != 1)
+            bool isCurrentStationOk = currentResult == 1 || (currentResult >= 3500 && currentResult <= 3699);
+            bool isPreviousStationOk = previousResult == 1;
+
+            if (!isCurrentStationOk)
             {
                 CurrentWriteState.TaskStatus = currentResult;
                 return false;
             }
 
-            if (previousResult != 1 || previousResult2 != 1)
+            if (!isPreviousStationOk)
             {
                 CurrentWriteState.TaskStatus = previousResult;
                 return false;
             }
 
+            CurrentWriteState.TaskStatus =
+                currentResult >= 3500 && currentResult <= 3699
+                    ? currentResult
+                    : 1;
 
-
-            if (currentResult == 1 && previousResult == 1 && previousResult2 == 1)
-            {
-                CurrentWriteState.TaskStatus = 1;
-                return true;
-            }
-
-            return false;
+            return true;
         }
         catch (System.Exception ex)
         {

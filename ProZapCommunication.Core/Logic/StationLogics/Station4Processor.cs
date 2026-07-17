@@ -67,25 +67,27 @@ public class Station4Processor : StationProcessorBase
             int currentResult = DbRepository.CheckSnCurrentStationStatus(StationIdentity, StationId, CurrentReadState.DMC);
             int previousResult = DbRepository.CheckSnPreviousStationStatus(StationIdentity, 3, CurrentReadState.DMC);
 
-            if( currentResult != 1)
+            bool isCurrentStationOk = currentResult == 1 || (currentResult >= 3100 && currentResult <= 3399);
+            bool isPreviousStationOk = previousResult == 1;
+
+            if (!isCurrentStationOk)
             {
                 CurrentWriteState.TaskStatus = currentResult;
                 return false;
             }
 
-            if (previousResult != 1)
+            if (!isPreviousStationOk)
             {
                 CurrentWriteState.TaskStatus = previousResult;
                 return false;
             }
 
-            if(currentResult == 1 && previousResult == 1)
-            {
-                CurrentWriteState.TaskStatus = 1;
-                return true;
-            }
+            CurrentWriteState.TaskStatus =
+                currentResult >= 3100 && currentResult <= 3399
+                    ? currentResult
+                    : 1;
 
-            return false;
+            return true;
         }
         catch (System.Exception ex)
         {

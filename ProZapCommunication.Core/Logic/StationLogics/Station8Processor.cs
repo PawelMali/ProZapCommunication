@@ -9,6 +9,7 @@ namespace ProZapCommunication.Core.Logic.StationLogics;
 public class Station8Processor : StationProcessorBase
 {
     private readonly string _resultsTagName;
+    private string _visionDestPath;
 
 
     public Station8Processor(int stationId, IDatabaseRepository db, IPlcProvider plc, string stationIdentity, string resultsTagName)
@@ -24,8 +25,20 @@ public class Station8Processor : StationProcessorBase
 
         switch (currentTask)
         {
+            case PlcTaskType.ReworkSn: // --- REAKCJA NA TASK 5 ---
+                return HandleReworkMainSn();
+
+            case PlcTaskType.ReworkMfsSn: // --- REAKCJA NA TASK 6 ---
+                return HandleReworkMfsSn();
+
+            case PlcTaskType.ReworkMotorSn: // --- REAKCJA NA TASK 7 ---
+                return HandleReworkMotorSn();
+
             case PlcTaskType.ReworkRadiatorSn: // --- REAKCJA NA TASK 8 ---
                 return HandleReworkRadiatorSn();
+
+            case PlcTaskType.ReworkCheckDiskSpace: // --- REAKCJA NA TASK 9 ---
+                return HandleCheckDiskSpace();
 
 
 
@@ -36,6 +49,161 @@ public class Station8Processor : StationProcessorBase
         }
     }
 
+    private bool HandleReworkMainSn()
+    {
+        Log.Information("S{Id} [TASK 5]: Start rework MAIN_SN {Sn} procedure.", StationId);
+
+        if (CurrentReadState is Station8ReadBaseModel reworkRead)
+        {
+            string currentSn = reworkRead.DMC;
+            int currentCode = reworkRead.Rework_Code;
+
+            int currentStatus = (currentCode >= 3000 && currentCode <= 3999)
+                ? 300 + (currentCode - 3000) / 100
+                : currentCode;
+
+            if (string.IsNullOrEmpty(currentSn))
+            {
+                Log.Warning("S{Id} [TASK 5]: Missing MAIN_SN to check", StationId);
+                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.SQLReworkEmptyDMC;
+                return false;
+            }
+
+            if (currentStatus <= 0)
+            {
+                Log.Warning("S{Id} [TASK 5]: Missing Status rework to change", StationId);
+                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.SQLReworkEmptyStatus;
+                return false;
+            }
+
+            Log.Information("S{Id} [TASK 5]: Get MAIN_SN form PLC {Sn}, Status: {Status}, Code: {Code}",
+                StationId, currentSn, currentStatus, currentCode);
+
+            // Wywołanie metody transakcyjnej z repozytorium SQL
+            var isDbSuccess = DbRepository.ProcessMainSnRework(currentSn, currentStatus, currentCode, StationId, StationIdentity);
+
+            if (isDbSuccess == 1)
+            {
+                Log.Information("S{Id} [TASK 5]: Rework MAIN_SN {Sn} procedure completed successfully.", StationId, currentSn);
+                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.Success; // No Error
+                return true;
+            }
+            else
+            {
+                Log.Error("S{Id} [TASK 5]: Sql error {ErrorCode}", StationId, isDbSuccess);
+                CurrentWriteState.TaskStatus = isDbSuccess;
+                return false;
+            }
+        }
+
+        Log.Error("S{Id} [TASK 5]: Critical error - model structure is not of type Station8ReadBaseModel.", StationId);
+        CurrentWriteState.TaskStatus = (short)PlcTaskStatus.SQLUnknownError;
+        return false;
+    }
+
+    private bool HandleReworkMfsSn()
+    {
+        Log.Information("S{Id} [TASK 6]: Start rework MFS_SN {Sn} procedure.", StationId);
+
+        if (CurrentReadState is Station8ReadBaseModel reworkRead)
+        {
+            string currentSn = reworkRead.DMC;
+            int currentCode = reworkRead.Rework_Code;
+
+            int currentStatus = (currentCode >= 3000 && currentCode <= 3999)
+                ? 300 + (currentCode - 3000) / 100
+                : currentCode;
+
+            if (string.IsNullOrEmpty(currentSn))
+            {
+                Log.Warning("S{Id} [TASK 6]: Missing MFS_SN to check", StationId);
+                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.SQLReworkEmptyDMC;
+                return false;
+            }
+
+            if (currentStatus <= 0)
+            {
+                Log.Warning("S{Id} [TASK 6]: Missing Status rework to change", StationId);
+                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.SQLReworkEmptyStatus;
+                return false;
+            }
+
+            Log.Information("S{Id} [TASK 6]: Get MFS_SN form PLC {Sn}, Status: {Status}, Code: {Code}",
+                StationId, currentSn, currentStatus, currentCode);
+
+            // Wywołanie metody z interfejsu repozytorium SQL
+            var isDbSuccess = DbRepository.ProcessMfsRework(currentSn, currentStatus, currentCode, StationId, StationIdentity);
+            if (isDbSuccess == 1)
+            {
+                Log.Information("S{Id} [TASK 6]: Rework MFS_SN {Sn} procedure completed successfully.", StationId, currentSn);
+                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.Success; // No Error
+                return true;
+            }
+            else
+            {
+                Log.Error("S{Id} [TASK 6]: Sql error {ErrorCode}", StationId, isDbSuccess);
+                CurrentWriteState.TaskStatus = isDbSuccess;
+                return false;
+            }
+        }
+
+        Log.Error("S{Id} [TASK 6]: Critical error - model structure is not of type Station8ReadBaseModel.", StationId);
+        CurrentWriteState.TaskStatus = (short)PlcTaskStatus.SQLUnknownError;
+        return false;
+    }
+
+    private bool HandleReworkMotorSn()
+    {
+        Log.Information("S{Id} [TASK 7]: Start rework Motor_Sn {Sn} procedure.", StationId, CurrentReadState.DMC);
+
+        if (CurrentReadState is Station8ReadBaseModel reworkRead)
+        {
+            string currentSn = reworkRead.DMC;
+            int currentCode = reworkRead.Rework_Code; 
+
+            int currentStatus = (currentCode >= 3000 && currentCode <= 3999)
+                ? 300 + (currentCode - 3000) / 100
+                : currentCode;
+
+            if (string.IsNullOrEmpty(currentSn))
+            {
+                Log.Warning("S{Id} [TASK 7]: Missing Motor SN to check", StationId);
+                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.SQLReworkEmptyDMC; 
+                return false;
+            }
+
+            if (currentStatus <= 0)
+            {
+                Log.Warning("S{Id} [TASK 7]: Missing Status rework to change", StationId);
+                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.SQLReworkEmptyStatus; 
+                return false;
+            }
+
+            Log.Information("S{Id} [TASK 7]: Get Motor SN form PLC {Sn}, Status: {Status}, Code: {Code}",
+                StationId, currentSn, currentStatus, currentCode);
+
+            // Wywołanie naszej nowej metody z interfejsu repozytorium SQL
+            var isDbSuccess = DbRepository.ProcessMotorRework(currentSn, currentStatus, currentCode, StationId, StationIdentity);
+
+            if (isDbSuccess == 1)
+            {
+                Log.Information("S{Id} [TASK 7]: Rework Motor SN {Sn} procedure completed successfully.", StationId, currentSn);
+                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.Success; // No Error
+                return true;
+            }
+            else
+            {
+                Log.Error("S{Id} [TASK 7]: Sql error {ErrorCode}", StationId, isDbSuccess);
+                CurrentWriteState.TaskStatus = isDbSuccess;
+                return false;
+            }
+        }
+
+        Log.Error("S{Id} [TASK 7]: Critical error - model structure is not of type Station8ReadBaseModel.", StationId);
+        CurrentWriteState.TaskStatus = (short)PlcTaskStatus.SQLUnknownError;
+        return false;
+    }
+
     private bool HandleReworkRadiatorSn()
     {
         Log.Information("S{Id} [TASK 8]: Start rework Radiator_Sn {Sn} procedure.", StationId, CurrentReadState.DMC);
@@ -44,20 +212,33 @@ public class Station8Processor : StationProcessorBase
         if (CurrentReadState is Station8ReadBaseModel reworkRead)
         {
             string currentSn = reworkRead.DMC;
-            int currentStatus = reworkRead.Rework_Status;
-            int currentCode = 0; // Placeholder for rework code, can be extended if needed
+            int currentCode = reworkRead.Rework_Code; // Placeholder for rework code, can be extended if needed
+
+            int currentStatus = (currentCode >= 3000 && currentCode <= 3999)
+                ? 300 + (currentCode - 3000) / 100
+                : currentCode;
+
+
+
 
             if (string.IsNullOrEmpty(currentSn))
             {
-                Log.Warning("S{Id} [TASK 8]: Missing SN to check", StationId);
-                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.SQLEmptyResultsDMC; // Invalid Parameters status
+                Log.Warning("S{Id} [TASK 8]: Missing Radiator SN to check", StationId);
+                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.SQLReworkEmptyDMC; // Invalid Parameters status
                 return false;
             }
 
-            Log.Information("S{Id} [TASK 8]: Get Radiator SN form PLC {Sn}, Status: {Status}",
-                StationId, currentSn, currentStatus);
+            if (currentStatus <= 0)
+            {
+                Log.Warning("S{Id} [TASK 8]: Missing Status rework to change", StationId);
+                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.SQLReworkEmptyStatus; // Invalid Parameters status
+                return false;
+            }
 
-            // Wywołanie zaimplementowanej w Kroku 3 metody transakcyjnej z repozytorium bazy danych
+            Log.Information("S{Id} [TASK 8]: Get Radiator SN form PLC {Sn}, Status: {Status}, Code: {Code}",
+                StationId, currentSn, currentStatus, currentCode);
+
+            // Wywołanie zaimplementowanej w Kroku 3 metody transakcyjnej z repozytorium bazy dany
             int isDbSuccess = DbRepository.ProcessRadiatorRework(currentSn, currentStatus, currentCode, StationId, StationIdentity);
 
             if (isDbSuccess == 1)
@@ -68,14 +249,74 @@ public class Station8Processor : StationProcessorBase
             }
             else
             {
-                Log.Error("S{Id} [TASK 8]: Sql error", StationId);
-                CurrentWriteState.TaskStatus = StationId; 
+                Log.Error("S{Id} [TASK 8]: Sql error {ErrorCode}", StationId, isDbSuccess);
+                CurrentWriteState.TaskStatus = isDbSuccess; 
                 return false;
             }
         }
 
-        Log.Error("S{Id} [TASK 8]: Critical error - model structure is not of type ReworkHandshakeModelRead.", StationId);
+        Log.Error("S{Id} [TASK 8]: Critical error - model structure is not of type Station8ReadBaseModel.", StationId);
         CurrentWriteState.TaskStatus = (short)PlcTaskStatus.SQLUnknownError;
         return false;
+    }
+
+    private bool HandleCheckDiskSpace()
+    {
+        Log.Information("S{Id} [TASK 9]: Checking disk space...", StationId);
+
+        // Jeśli ścieżka nie jest skonfigurowana, domyślnie sprawdzamy dysk aplikacji (np. C:\)
+        string pathToAnalyze = string.IsNullOrEmpty(_visionDestPath) ? AppDomain.CurrentDomain.BaseDirectory : _visionDestPath;
+
+        try
+        {
+            // Wyciągamy informację o dysku (np. "D:\Archiwum" -> drive name: "D:\")
+            string driveRoot = Path.GetPathRoot(pathToAnalyze);
+            DriveInfo drive = new DriveInfo(driveRoot);
+
+            if (!drive.IsReady)
+            {
+                Log.Error("S{Id} [TASK 9]: Hard drive {Drive} is not ready or disconnected!", StationId, driveRoot);
+                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.HardDriveSpaceFailed; // Status błędu (np. błąd sprzętowy)
+                return false;
+            }
+
+            long totalSpace = drive.TotalSize;
+            long freeSpace = drive.AvailableFreeSpace;
+            long usedSpace = totalSpace - freeSpace;
+
+            // Obliczamy procentowe zajęcie dysku
+            // Używamy rzutowania na double, aby uniknąć zaokrągleń całkowitoliczbowych do zera
+            double usedPercent = ((double)usedSpace / totalSpace) * 100;
+            short finalPercent = (short)(1000 + Math.Round(usedPercent * 10));
+
+            // Zapisujemy wynik bezpośrednio do struktury WRITE – pętla 50ms natychmiast wyśle to do PLC
+            CurrentWriteState.TaskStatus = finalPercent;
+
+            Log.Information("S{Id} [TASK 9]: Analyzed disk {Drive} -> Used: {Percent}% (Free: {Free} GB / Total: {Total} GB)",
+                StationId,
+                driveRoot,
+                finalPercent,
+                Math.Round((double)freeSpace / 1024 / 1024 / 1024, 1),
+                Math.Round((double)totalSpace / 1024 / 1024 / 1024, 1));
+
+            // Monitorowanie alarmowe w logach C#
+            if (finalPercent >= 90)
+            {
+                Log.Fatal("S{Id} [TASK 9]: Disk usage exceeded 90%! Immediate action required.", StationId);
+            }
+            else if (finalPercent >= 80)
+            {
+                Log.Warning("S{Id} [TASK 9]: Disk usage exceeded 80%.", StationId);
+            }
+
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "S{Id} [TASK 9]: Unexpected error while checking disk space.", StationId);
+            CurrentWriteState.TaskStatus = (short)PlcTaskStatus.HardDriveSpaceFailed;;
+            return false;
+        }
     }
 }

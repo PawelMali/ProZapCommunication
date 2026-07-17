@@ -30,5 +30,8 @@ public interface IDatabaseRepository
 
 
     int ProcessRadiatorRework(string radiatorSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity);
+    int ProcessMotorRework(string motorSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity);
+    int ProcessMfsRework(string mfsSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity);
+    int ProcessMainSnRework(string mainSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity);
 
 }
