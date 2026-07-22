@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -15,10 +16,17 @@ namespace ProZapCommunication.UI
     public partial class MainWindow : Window
     {
         private readonly Bootstrapper _appEngine;
+        private string BuildDate;
 
         public MainWindow()
         {
             InitializeComponent();
+            BuildDate = File.GetLastWriteTime(
+            System.Reflection.Assembly.GetExecutingAssembly().Location)
+        .ToString("yyyy-MM-dd HH:mm");
+
+            BuildDateTextBlock.Text = "Version " + Environment.NewLine + BuildDate;
+
 
             // Tworzymy instancję silnika aplikacji
             _appEngine = new Bootstrapper();
@@ -30,6 +38,7 @@ namespace ProZapCommunication.UI
 
             this.Closing += OnClosing;
         }
+
 
         private void BtnSendTask_Click(object sender, RoutedEventArgs e)
         {

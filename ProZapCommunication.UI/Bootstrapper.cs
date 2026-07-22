@@ -41,7 +41,7 @@ public class Bootstrapper
         {
             // 1. Budowanie managera konfiguracji dla ścieżki config/appsettings.json
             var configBuilder = new ConfigurationBuilder()
-                .SetBasePath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config"))
+                .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
             IConfigurationRoot configRoot = configBuilder.Build();
@@ -50,7 +50,7 @@ public class Bootstrapper
             AppConfig appConfig = configRoot.Get<AppConfig>();
 
             // 2. Inicjalizacja wspólnego repozytorium bazy danych
-            var dbRepository = new SqlRepository(appConfig.ConnectionString);
+            var dbRepository = new SqlRepository(appConfig.ConnectionString, appConfig.MaxReworkAllowed);
 
             // Tworzymy główny ViewModel UI (przypiszemy mu pierwszy uniwersalny provider dla statusu ogólnego)
             MainVm = new MainViewModel();

@@ -86,8 +86,40 @@ public class ReportRepository
             }
         }
 
-        // Opcjonalnie: Tutaj można dodać prostą logikę wyciągającą Min(Timestamp) jako StartTime 
-        // i Max(Timestamp) jako EndTime ze wszystkich list.
+        // ====================================================================
+        // ETAP 5: Zbieranie wszystkich unikalnych numerów seryjnych dla sztuki
+        // ====================================================================
+        // Pobieramy wartości z historii stacji (na wypadek, gdyby sztuka miała przypisane różne komponenty w różnych próbach)
+        var radiatorSns = report.Station1History.Select(x => x.Radiator_SN).Where(sn => !string.IsNullOrEmpty(sn)).Distinct().ToList();
+        var mfsSns = report.Station2History.Select(x => x.MFS_SN).Where(sn => !string.IsNullOrEmpty(sn)).Distinct().ToList();
+        var motorSns = report.Station7History.Select(x => x.Motor_SN).Where(sn => !string.IsNullOrEmpty(sn)).Distinct().ToList();
+
+        // Dodajemy również wartości bezpośrednio z pól raportu dla pewności
+        if (!string.IsNullOrEmpty(report.Mfs_SN) && !mfsSns.Contains(report.Mfs_SN)) mfsSns.Add(report.Mfs_SN);
+        if (!string.IsNullOrEmpty(report.Motor_SN) && !motorSns.Contains(report.Motor_SN)) motorSns.Add(report.Motor_SN);
+
+        // Zapytanie SQL do tabeli Station8ResultsStation8Results korzystające z operatora IN (bardzo wydajne w SQL Server)
+        string reworkSql = @"
+            SELECT * FROM Station8Results 
+            WHERE SN = @mainSn 
+               OR (Radiator_SN IN @radiatorSns AND @hasRadiators = 1)
+               OR (Mfs_SN IN @mfsSns AND @hasMfs = 1)
+               OR (Motor_SN IN @motorSns AND @hasMotors = 1)
+            ORDER BY Timestamp DESC;";
+
+        var reworkParams = new
+        {
+            mainSn = report.SN,
+            radiatorSns = radiatorSns.Any() ? radiatorSns : new List<string> { "" },
+            hasRadiators = radiatorSns.Any() ? 1 : 0,
+            mfsSns = mfsSns.Any() ? mfsSns : new List<string> { "" },
+            hasMfs = mfsSns.Any() ? 1 : 0,
+            motorSns = motorSns.Any() ? motorSns : new List<string> { "" },
+            hasMotors = motorSns.Any() ? 1 : 0
+        };
+
+        report.Station8History = (await connection.QueryAsync<Station8Result>(reworkSql, reworkParams)).ToList();
+        report.TotalAttempts += report.Station8History.Count;
 
         return report;
     }
@@ -182,9 +214,28 @@ public class ReportRepository
                     partialReport.Station7History = (await multiSub.ReadAsync<Station7Result>()).ToList();
                 }
 
+                // ====================================================================
+                // NOWY ETAP DLA KROKU 3: Przeszukiwanie Rework tylko po Motor_SN i Mfs_SN
+                // ====================================================================
+                string partialReworkSql = @"
+                    SELECT * FROM Station8Results 
+                    WHERE Motor_SN = @foundMotorSn 
+                       OR (Mfs_SN = @foundMfsSn AND @hasMfs = 1)
+                    ORDER BY Timestamp DESC;";
+
+                var partialReworkParams = new
+                {
+                    foundMotorSn,
+                    foundMfsSn = foundMfsSn ?? string.Empty,
+                    hasMfs = !string.IsNullOrEmpty(foundMfsSn) ? 1 : 0
+                };
+
+                partialReport.Station8History = (await connection.QueryAsync<Station8Result>(partialReworkSql, partialReworkParams)).ToList();
+
                 partialReport.TotalAttempts = partialReport.Station5History.Count +
                                              partialReport.Station6History.Count +
-                                             partialReport.Station7History.Count;
+                                             partialReport.Station7History.Count +
+                                             partialReport.Station8History.Count;
 
                 return partialReport;
             }
@@ -200,7 +251,10 @@ public class ReportRepository
 
         // Dynamicznie określamy nazwę tabeli oraz kolumnę statusu (Station 5-7 mają 'Status', 1-4 mają 'SN_Status')
         string tableName = $"Station{stationId}Results";
-        string statusColumn = stationId >= 5 ? "Motor_Status" : "SN_Status";
+        string statusColumn = "SN_Status";
+            
+        if (stationId >= 5 && stationId <= 7)
+            statusColumn = "Motor_Status";
 
         var sqlBuilder = new StringBuilder($"SELECT * FROM {tableName} WHERE Timestamp BETWEEN @fromDate AND @toDate");
 

@@ -508,25 +508,52 @@
 
             @if(report.Station6History.Any())
             {
-                <MudText Typo="Typo.h6" Class="mb-2">MFS Station 2 History (Balancing)</MudText>
-                <MudTable Items="@report.Station6History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
-                    <HeaderContent>
-                        <MudTh Style="width: 180px;">Timestamp</MudTh>
-                        <MudTh Style="width: 100px;">Status</MudTh>
-                        <MudTh Style="width: 120px;">Cycle Time</MudTh>
-                        <MudTh>Motor SN</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="Timestamp">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
-                        <MudTd DataLabel="Status">
-                            <MudChip T="string" Color="@(context.Motor_Status == 1 ? Color.Success : Color.Error)" Size="Size.Small">
-                                @(context.Motor_Status == 1 ? "OK" : "NOK")
-                            </MudChip>
-                        </MudTd>
-                        <MudTd>@context.CycleTime s</MudTd>
-                        <MudTd DataLabel="Motor SN">@context.Motor_SN</MudTd>
-                    </RowTemplate>
-                </MudTable>
+
+                <MudStack Style="padding-left:10px; padding-right:10px; margin-top:10px;">
+                    <MudPaper Class="pa-2 mb-2" Style="background-color: rgba(var(--mud-palette-primary-rgb), 0.15);">
+                        <MudText Typo="Typo.h6" Color="Color.Primary">MFS Station 6 History (Balancing)</MudText>
+                    </MudPaper>
+                    <MudTable Items="@report.Station6History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
+                        <HeaderContent>
+                            <MudTh Class="text-center">Timestamp</MudTh>
+                            <MudTh Class="text-center">Status</MudTh>
+                            <MudTh Class="text-center">Motor SN</MudTh>
+                            <MudTh Class="text-center">Cycle Time</MudTh>
+                            <MudTh Class="text-center">Reference</MudTh>
+                            <MudTh Class="text-center">Initial static unbalance</MudTh>
+                            <MudTh Class="text-center">Final static unbalance</MudTh>
+                            <MudTh Class="text-center">Runout</MudTh>
+                            <MudTh Class="text-center">Initial moment unbalance</MudTh>
+                            <MudTh Class="text-center">Final moment unbalance</MudTh>
+                            <MudTh Class="text-center">Chamber</MudTh>
+                            <MudTh Class="text-center">Initial static unbalance angle</MudTh>
+                            <MudTh Class="text-center">Final static unbalance angle</MudTh>
+                            <MudTh Class="text-center">Rpm</MudTh>
+                            <MudTh Class="text-center">Current</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Timestamp" Class="text-center">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+                            <MudTd DataLabel="Status" Class="text-center">
+                                <MudChip T="string" Color="@GetMainStatusColor(context.Motor_Status)" Size="Size.Small">
+                                    @GetMainStatusText(context.Motor_Status) | @context.Motor_Status
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Motor SN" Class="text-center">@context.Motor_SN</MudTd>
+                            <MudTd DataLabel="Cycle time" Class="text-center">@context.CycleTime s</MudTd>
+                            <MudTd DataLabel="Reference" Class="text-center">@context.Reference_Number</MudTd>
+                            <MudTd DataLabel="Initial static unbalance" Class="text-center">@context.Initial_static_unbalance.ToString("N2")</MudTd>
+                            <MudTd DataLabel="Final static unbalance" Class="text-center">@context.Final_static_unbalance.ToString("N2")</MudTd>
+                            <MudTd DataLabel="Runout" Class="text-center">@context.Runout.ToString("N2")</MudTd>
+                            <MudTd DataLabel="Initial moment unbalance" Class="text-center">@context.Initial_moment_unbalance.ToString("N2")</MudTd>
+                            <MudTd DataLabel="Final moment unbalance" Class="text-center">@context.Final_moment_unbalance.ToString("N2")</MudTd>
+                            <MudTd DataLabel="Chamber" Class="text-center">@context.Chamber.ToString("N2")</MudTd>
+                            <MudTd DataLabel="Initial static unbalance angle" Class="text-center">@context.Initial_static_unbalance_angle.ToString("N2")</MudTd>
+                            <MudTd DataLabel="Final static unbalance angle" Class="text-center">@context.Final_static_unbalance_angle.ToString("N2")</MudTd>
+                            <MudTd DataLabel="Rpm" Class="text-center">@context.Rpm.ToString("N2")</MudTd>
+                            <MudTd DataLabel="Current" Class="text-center">@context.Current.ToString("N2")</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudStack>
             }
 
             @if(report.Station7History.Any())
@@ -653,7 +680,57 @@
                         </RowTemplate>
                     </MudTable>
                 </MudStack>
+            }
 
+        </MudTabPanel>
+
+        <MudTabPanel Text="Rework (Stations 8)" Icon="@Icons.Material.Filled.Build">
+            
+            @if (report.Station8History.Any())
+            {
+
+                <MudStack Style="padding-left:10px; padding-right:10px; margin-top:10px;">
+                    <MudPaper Class="pa-2 mb-2" Style="background-color: rgba(var(--mud-palette-primary-rgb), 0.15);">
+                        <MudText Typo="Typo.h6" Color="Color.Primary">MFS Station 8 History (Motor assembly)</MudText>
+                    </MudPaper>
+                    <MudTable Items="@report.Station8History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
+                        <HeaderContent>
+                            <MudTh Class="text-center">Timestamp</MudTh>
+                            <MudTh Class="text-center">SN/Motor Status</MudTh>
+                            <MudTh Class="text-center">SN/Motor </MudTh>
+                            <MudTh Class="text-center">Radiator Status</MudTh>
+                            <MudTh Class="text-center">Radiator </MudTh>
+                            <MudTh Class="text-center">MFS Status</MudTh>
+                            <MudTh Class="text-center">MFS </MudTh>
+
+                            <MudTh Class="text-center">Rework Code </MudTh>
+
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Timestamp" Class="text-center">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+                            <MudTd DataLabel="SN/Motor Status" Class="text-center">
+                                <MudChip T="string" Color="@GetMainStatusColor(context.SN_Status)" Size="Size.Small">
+                                    @GetMainStatusText(context.SN_Status) | @context.SN_Status
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="SN/Motor" Class="text-center">@context.SN</MudTd>
+
+                            <MudTd DataLabel="Radiator Status" Class="text-center">
+                                <MudChip T="string" Color="@GetMainStatusColor(context.Radiator_Status)" Size="Size.Small">
+                                    @GetMainStatusText(context.Radiator_Status) | @context.Radiator_Status
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Radiator" Class="text-center">@context.Radiator_SN</MudTd>
+                            <MudTd DataLabel="MFS Status" Class="text-center">
+                                <MudChip T="string" Color="@GetMainStatusColor(context.Mfs_Status)" Size="Size.Small">
+                                    @GetMainStatusText(context.Mfs_Status) | @context.Mfs_Status
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="MFS" Class="text-center">@context.Mfs_SN</MudTd>
+                            <MudTd DataLabel="Rework Code" Class="text-center">@context.ReworkCode</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudStack>
             }
 
         </MudTabPanel>

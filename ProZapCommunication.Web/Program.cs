@@ -3,9 +3,19 @@ using Microsoft.Extensions.Hosting;
 using MudBlazor.Services;
 using ProZapCommunication.Web.Components;
 using ProZapCommunication.Web.Database;
+using ProZapCommunication.Web.Models;
 using ProZapCommunication.Web.Services;
 
-var builder = WebApplication.CreateBuilder(args);
+var options = new WebApplicationOptions
+{
+    Args = args,
+    // Główny folder aplikacji
+    ContentRootPath = AppContext.BaseDirectory,
+    // Sztywna ścieżka do folderu z plikami CSS i obrazkami
+    WebRootPath = Path.Combine(AppContext.BaseDirectory, "wwwroot")
+};
+
+var builder = WebApplication.CreateBuilder(options);
 
 // 1. Konfiguracja uruchamiania jako Windows Service
 // Ta metoda sprawia, że jeśli aplikacja zostanie zarejestrowana w systemie Windows jako usługa,
@@ -16,7 +26,10 @@ builder.Host.UseWindowsService();
 
 // 2. Dodanie usług Blazor do kontenera DI (Dependency Injection)
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+    .AddInteractiveServerComponents(options =>
+    {
+        options.DetailedErrors = true; // <--- TO POKAŻE NAM BŁĄD C# W KONSOLI F12
+    });
 
 builder.Services.AddScoped<ReportRepository>();
 builder.Services.AddMudServices();
@@ -58,5 +71,6 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
 
 app.Run();

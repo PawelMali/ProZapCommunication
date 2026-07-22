@@ -25,4 +25,7 @@ public class ProductionProcessReport
     public List<Station5Result> Station5History { get; set; } = new();
     public List<Station6Result> Station6History { get; set; } = new();
     public List<Station7Result> Station7History { get; set; } = new();
+
+    // --- HISTORIA REWORK ---
+    public List<Station8Result> Station8History { get; set; } = new();
 }

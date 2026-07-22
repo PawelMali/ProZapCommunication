@@ -12,10 +12,12 @@ namespace ProZapCommunication.Infrastructure.Database;
 public class SqlRepository : IDatabaseRepository
 {
     private readonly string _connectionString;
+    private readonly int _maxReworkAllowed; // Pole przechowujące limit z appconfig
 
-    public SqlRepository(string connectionString)
+    public SqlRepository(string connectionString, int maxReworkAllowed)
     {
         _connectionString = connectionString;
+        _maxReworkAllowed = maxReworkAllowed;
     }
 
 
@@ -1054,11 +1056,6 @@ public class SqlRepository : IDatabaseRepository
 
 
 
-
-
-
-
-
     public int CheckSnCurrentStationStatus(string stationIdentity, int stationId, string sn)
     {
         var stationLog = Log.ForContext("PlcIdentity", stationIdentity);
@@ -1539,7 +1536,7 @@ public class SqlRepository : IDatabaseRepository
         string tableName = $"Station7Results";
 
         string sql = $@"
-        SELECT TOP 1 Mfs_Status
+        SELECT TOP 1 Motor_Status
         FROM {tableName}
         WHERE Mfs_SN = @Mfs_SN
         ORDER BY Timestamp DESC;";
@@ -1707,12 +1704,12 @@ public class SqlRepository : IDatabaseRepository
         const string sqlUpdateProduction = @"
                 UPDATE Station1Results 
                 SET Radiator_Status = @ReworkStatus, 
-                    SN_Status = 3100 
+                    SN_Status = @ReworkCode 
                 WHERE Id = @LogId;";
 
         // 3. Zapytanie wstawiające rekord do tabeli reworku
         const string sqlInsertRework = @"
-                INSERT INTO StationRework (StationId, Timestamp, SN, SN_Status, Radiator_SN, Radiator_Status, Mfs_SN, mfs_Status, ReworkCode)
+                INSERT INTO Station8Results (StationId, Timestamp, SN, SN_Status, Radiator_SN, Radiator_Status, Mfs_SN, mfs_Status, ReworkCode)
                 VALUES (@StationId, @Timestamp, @SN, @SN_Status, @Radiator_SN, @Radiator_Status, @Mfs_SN, @mfs_Status, @ReworkCode);";
 
         try
@@ -1723,6 +1720,13 @@ public class SqlRepository : IDatabaseRepository
                 // Otwieramy transakcję – jeśli cokolwiek pójdzie nie tak, baza wycofa zmiany (Rollback)
                 using (IDbTransaction transaction = connection.BeginTransaction())
                 {
+                    // WALIDACJA LIMITU REWORKÓW
+                    if (IsReworkLimitExceeded(connection, radiatorSn, transaction))
+                    {
+                        stationLog.Warning("S{Id} [SQL]: Radiator SN: {Sn} exceeded max allowed reworks limit ({Limit}).", currentStationId, radiatorSn, _maxReworkAllowed);
+                        return (int)PlcTaskStatus.SQLReworkMaxAllowed;
+                    }
+
                     // KROK 1: Szukamy wpisu ze Stacji 1
                     var latestRecord = connection.QueryFirstOrDefault(sqlFindLatest, new { RadiatorSn = radiatorSn }, transaction);
 
@@ -1738,7 +1742,7 @@ public class SqlRepository : IDatabaseRepository
                         stationLog.Information("S{Id} [SQL]: Updated log ID {LogId} with status {Status}.", stationIdentity, latestRecord.Id, reworkCode);
                     }
 
-                    // KROK 3: Wstawienie rekordu do tabeli StationRework
+                    // KROK 3: Wstawienie rekordu do tabeli Station8Results
                     // Uwaga: Ponieważ z PLC odczytujesz głównie Radiator_SN, pola SN oraz Mfs_SN inicjalizujemy tymczasowo pustym ciągiem lub wartością domyślną
                     connection.Execute(sqlInsertRework, new
                     {
@@ -1767,7 +1771,6 @@ public class SqlRepository : IDatabaseRepository
         }
     }
 
-
     public int ProcessMotorRework(string motorSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity)
     {
         var stationLog = Log.ForContext("StationIdentity", stationIdentity.Replace(".", "_"));
@@ -1781,6 +1784,13 @@ public class SqlRepository : IDatabaseRepository
                 connection.Open();
                 using (IDbTransaction transaction = connection.BeginTransaction())
                 {
+                    // WALIDACJA LIMITU REWORKÓW
+                    if (IsReworkLimitExceeded(connection, motorSn, transaction))
+                    {
+                        stationLog.Warning("S{Id} [SQL]: Motor SN: {Sn} exceeded max allowed reworks limit ({Limit}).", currentStationId, motorSn, _maxReworkAllowed);
+                        return (int)PlcTaskStatus.SQLReworkMaxAllowed;
+                    }
+
                     // Flagi określające, które stacje wymagają aktualizacji na podstawie parametrów biznesowych
                     bool updateSt5 = false;
                     bool updateSt6 = false;
@@ -1838,9 +1848,9 @@ public class SqlRepository : IDatabaseRepository
                         return (int)PlcTaskStatus.SQLReworkDMCNBotFound;
                     }
 
-                    // KROK OSTATNI: Wstawienie wpisu do tabeli historycznej StationRework
+                    // KROK OSTATNI: Wstawienie wpisu do tabeli historycznej Station8Results
                     const string sqlInsertRework = @"
-                            INSERT INTO StationRework (StationId, Timestamp, SN, SN_Status, Radiator_SN, Radiator_Status, Mfs_SN, mfs_Status, ReworkCode)
+                            INSERT INTO Station8Results (StationId, Timestamp, SN, SN_Status, Radiator_SN, Radiator_Status, Mfs_SN, mfs_Status, ReworkCode)
                             VALUES (@StationId, @Timestamp, @SN, @SN_Status, @Radiator_SN, @Radiator_Status, @Mfs_SN, @mfs_Status, @ReworkCode);";
 
                     connection.Execute(sqlInsertRework, new
@@ -1872,45 +1882,6 @@ public class SqlRepository : IDatabaseRepository
         }
     }
 
-    /// <summary>
-    /// Pomocnicza metoda wewnętrzna wyszukująca i aktualizująca najnowszy rekord w konkretnej tabeli wyników stacji.
-    /// </summary>
-    private bool UpdateLatestMotorResult(IDbConnection conn, IDbTransaction trans, string tableName, string motorSn, int ReworkCode, ILogger logger)
-    {
-        // Dynamicznie wstrzykujemy nazwę tabeli. Bezpieczne, bo nazwa pochodzi w 100% z naszego zaufanego kodu (sztywne stringi powyżej)
-        string sqlFindLatest = $@"
-                SELECT TOP 1 Id 
-                FROM {tableName} 
-                WHERE Motor_SN = @MotorSn 
-                ORDER BY Timestamp DESC;";
-
-
-        string setClause = "Motor_Status = @Status";
-
-        if (tableName == "Station7Results")
-            setClause += ", Mfs_Status = @Status";
-
-        string sqlUpdate = $@"
-                UPDATE {tableName}
-                SET {setClause}
-                WHERE Id = @Id;";
-
-
-        long? latestId = conn.QueryFirstOrDefault<long?>(sqlFindLatest, new { MotorSn = motorSn }, trans);
-
-        if (latestId != null)
-        {
-            conn.Execute(sqlUpdate, new { Status = ReworkCode, Id = latestId.Value }, trans);
-            logger.Debug("S{Id} [SQL]: Updated latest record ID {Id} in table {Table} with status {Status}.", latestId.Value, tableName, ReworkCode);
-            return true;
-        }
-        else
-        {
-            logger.Warning("S{Id} [SQL]: No entry found for Motor_SN: {Sn} in table {Table}.", motorSn, tableName);
-            return false;
-        }
-    }
-
     public int ProcessMfsRework(string mfsSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity)
     {
         var stationLog = Log.ForContext("StationIdentity", stationIdentity.Replace(".", "_"));
@@ -1924,6 +1895,13 @@ public class SqlRepository : IDatabaseRepository
                 connection.Open();
                 using (IDbTransaction transaction = connection.BeginTransaction())
                 {
+                    // WALIDACJA LIMITU REWORKÓW
+                    if (IsReworkLimitExceeded(connection, mfsSn, transaction))
+                    {
+                        stationLog.Warning("S{Id} [SQL]: MFS SN: {Sn} exceeded max allowed reworks limit ({Limit}).", currentStationId, mfsSn, _maxReworkAllowed);
+                        return (int)PlcTaskStatus.SQLReworkMaxAllowed;
+                    }
+
                     // Warunek biznesowy: 2, 4 lub zakres od 3200 do 3299
                     if (reworkCode == 2 || reworkCode == 4 || (reworkCode >= 3200 && reworkCode <= 3299))
                     {
@@ -1958,9 +1936,9 @@ public class SqlRepository : IDatabaseRepository
                         return (int)PlcTaskStatus.SQLReworkUnknownStatus;
                     }
 
-                    // KROK OSTATNI: Wstawienie wpisu do tabeli historycznej StationRework
+                    // KROK OSTATNI: Wstawienie wpisu do tabeli historycznej Station8Results
                     const string sqlInsertRework = @"
-                            INSERT INTO StationRework (StationId, Timestamp, SN, SN_Status, Radiator_SN, Radiator_Status, Mfs_SN, mfs_Status, ReworkCode)
+                            INSERT INTO Station8Results (StationId, Timestamp, SN, SN_Status, Radiator_SN, Radiator_Status, Mfs_SN, mfs_Status, ReworkCode)
                             VALUES (@StationId, @Timestamp, @SN, @SN_Status, @Radiator_SN, @Radiator_Status, @Mfs_SN, @mfs_Status, @ReworkCode);";
 
                     connection.Execute(sqlInsertRework, new
@@ -2002,6 +1980,13 @@ public class SqlRepository : IDatabaseRepository
                 connection.Open();
                 using (IDbTransaction transaction = connection.BeginTransaction())
                 {
+                    // WALIDACJA LIMITU REWORKÓW
+                    if (IsReworkLimitExceeded(connection, mainSn, transaction))
+                    {
+                        stationLog.Warning("S{Id} [SQL]: Main SN: {Sn} exceeded max allowed reworks limit ({Limit}).", currentStationId, mainSn, _maxReworkAllowed);
+                        return (int)PlcTaskStatus.SQLReworkMaxAllowed;
+                    }
+
                     bool updateSt1 = false;
                     bool updateSt2 = false;
                     bool updateSt3 = false;
@@ -2068,9 +2053,9 @@ public class SqlRepository : IDatabaseRepository
                         return (int)PlcTaskStatus.SQLReworkDMCNBotFound;
                     }
 
-                    // KROK OSTATNI: Zapis historyczny do tabeli StationRework
+                    // KROK OSTATNI: Zapis historyczny do tabeli Station8Results
                     const string sqlInsertRework = @"
-                            INSERT INTO StationRework (StationId, Timestamp, SN, SN_Status, Radiator_SN, Radiator_Status, Mfs_SN, mfs_Status, ReworkCode)
+                            INSERT INTO Station8Results (StationId, Timestamp, SN, SN_Status, Radiator_SN, Radiator_Status, Mfs_SN, mfs_Status, ReworkCode)
                             VALUES (@StationId, @Timestamp, @SN, @SN_Status, @Radiator_SN, @Radiator_Status, @Mfs_SN, @mfs_Status, @ReworkCode);";
 
                     connection.Execute(sqlInsertRework, new
@@ -2099,9 +2084,7 @@ public class SqlRepository : IDatabaseRepository
         }
     }
 
-    /// <summary>
-    /// Pomocnicza metoda wewnętrzna do wyszukiwania po kolumnie 'SN' i aktualizacji 'SN_Status' w najnowszym rekordzie.
-    /// </summary>
+
     private bool UpdateLatestMainSnResult(IDbConnection conn, IDbTransaction trans, string tableName, string mainSn, int status, ILogger logger)
     {
         string sqlFindLatest = $@"
@@ -2128,6 +2111,54 @@ public class SqlRepository : IDatabaseRepository
             logger.Warning("S{Id} [SQL]: No entry found for SN: {Sn} in table {Table}.", mainSn, tableName);
             return false;
         }
+    }
+
+    private bool UpdateLatestMotorResult(IDbConnection conn, IDbTransaction trans, string tableName, string motorSn, int ReworkCode, ILogger logger)
+    {
+        // Dynamicznie wstrzykujemy nazwę tabeli. Bezpieczne, bo nazwa pochodzi w 100% z naszego zaufanego kodu (sztywne stringi powyżej)
+        string sqlFindLatest = $@"
+                SELECT TOP 1 Id 
+                FROM {tableName} 
+                WHERE Motor_SN = @MotorSn 
+                ORDER BY Timestamp DESC;";
+
+
+        string setClause = "Motor_Status = @Status";
+
+        if (tableName == "Station7Results")
+            setClause += ", Mfs_Status = @Status";
+
+        string sqlUpdate = $@"
+                UPDATE {tableName}
+                SET {setClause}
+                WHERE Id = @Id;";
+
+
+        long? latestId = conn.QueryFirstOrDefault<long?>(sqlFindLatest, new { MotorSn = motorSn }, trans);
+
+        if (latestId != null)
+        {
+            conn.Execute(sqlUpdate, new { Status = ReworkCode, Id = latestId.Value }, trans);
+            logger.Debug("S{Id} [SQL]: Updated latest record ID {Id} in table {Table} with status {Status}.", latestId.Value, tableName, ReworkCode);
+            return true;
+        }
+        else
+        {
+            logger.Warning("S{Id} [SQL]: No entry found for Motor_SN: {Sn} in table {Table}.", motorSn, tableName);
+            return false;
+        }
+    }
+
+    private bool IsReworkLimitExceeded(IDbConnection connection, string sn, IDbTransaction transaction = null)
+    {
+        const string sqlCount = @"
+        SELECT COUNT(1) 
+        FROM Station8Results 
+        WHERE SN = @SN OR Radiator_SN = @SN OR Mfs_SN = @SN;";
+
+        int currentReworkCount = connection.ExecuteScalar<int>(sqlCount, new { SN = sn }, transaction);
+
+        return currentReworkCount >= _maxReworkAllowed;
     }
 
 }

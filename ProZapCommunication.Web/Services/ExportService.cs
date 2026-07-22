@@ -52,6 +52,11 @@ public class ExportService
             "MSF 3",
             report.Station7History);
 
+        AddWorksheetFromData(
+            workbook,
+            "Rework",
+            report.Station8History);
+
         using var stream = new MemoryStream();
         workbook.SaveAs(stream);
 
@@ -198,6 +203,9 @@ public class ExportService
 
         if (typeof(T) == typeof(Station7Result))
             return (ExportColumn<T>[])(object)Station7Columns;
+
+        if (typeof(T) == typeof(Station8Result))
+            return (ExportColumn<T>[])(object)Station8Columns;
 
         throw new NotSupportedException(
             $"Brak konfiguracji dla {typeof(T).Name}");
@@ -364,6 +372,17 @@ public class ExportService
         new("Cycle\r\nTime (s)", x => x.CycleTime),
         new("Reference number", x => x.Reference_Number),
 
+        new("Initial static unbalance", x => x.Initial_static_unbalance.ToString("N2")),
+        new("Final static unbalance", x => x.Final_static_unbalance.ToString("N2")),
+        new("Runout", x => x.Runout.ToString("N2")),
+        new("Initial moment unbalance", x => x.Initial_moment_unbalance.ToString("N2")),
+        new("Final moment unbalance", x => x.Final_moment_unbalance.ToString("N2")),
+        new("Chamber", x => x.Chamber.ToString("N2")),
+        new("Initial static unbalance angle", x => x.Initial_static_unbalance_angle.ToString("N2")),
+        new("Final static unbalance angle", x => x.Final_static_unbalance_angle.ToString("N2")),
+        new("Rpm", x => x.Rpm.ToString("N2")),
+        new("Current", x => x.Current.ToString("N2")),
+
     };
 
     private static readonly ExportColumn<Station7Result>[] Station7Columns =
@@ -415,6 +434,24 @@ public class ExportService
         new("Screw 3\r\nAngle", x => x.Screw3_Angle)
     };
 
+    private static readonly ExportColumn<Station8Result>[] Station8Columns =
+{
+        new("Timestamp", x => x.Timestamp),
+        new("SN\\Motor", x => x.SN),
+        new("SN\\Motor Status", x => x.SNStatusText),
+        new("SN\\Motor Status Value", x => x.SN_Status),
+
+        new("Radiator SN", x => x.Radiator_SN),
+        new("Radiator Status", x => x.RadiatorStatusText),
+        new("Radiator Status Value", x => x.Radiator_Status),
+
+        new("MFS SN", x => x.Mfs_SN),
+        new("MFS Status", x => x.MfsStatusText),
+        new("MFS Status Value", x => x.Mfs_Status),
+
+        new("Rework Code", x => x.ReworkCode),
+
+    };
 
 
 }

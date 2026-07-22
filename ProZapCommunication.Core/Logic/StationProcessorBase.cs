@@ -257,35 +257,38 @@ public abstract class StationProcessorBase
         Task.Run(VisionSystemLoopAsync);
     }
 
-    /// <summary>
-    /// Niezależna pętla działająca w tle, odpowiedzialna wyłącznie za system wizyjny.
-    /// </summary>
+
+
+    private string GetStationPrefix()
+    {
+        if (StationId >= 1 && StationId <= 4)
+            return $"ST{StationId}_";
+        if (StationId >= 5 && StationId <= 7)
+            return $"MFS{StationId - 4}_";
+
+        return $"ST{StationId}_"; // Fallback bezpieczeństwa
+    }
+
     private async Task VisionSystemLoopAsync()
     {
-        using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(500)); // Próbkujemy folder co 100ms
+        using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));
+        string stationPrefix = GetStationPrefix();
 
         while (await timer.WaitForNextTickAsync())
         {
-            // Jeśli sieć jeszcze nie odebrała pierwszej ramki, CurrentReadState to null.
-            // Czekamy na kolejny tik timera (za 100ms), nie rzucając błędem.
-            if (CurrentReadState == null)
-            {
-                continue;
-            }
+            if (CurrentReadState == null) continue;
 
-            // 1. Sprawdzamy czy PLC o cokolwiek prosi
             int requestMask = CurrentReadState.CameraRequest;
 
             if (requestMask == 0)
             {
-                // Jeśli PLC wyzerowało żądanie, my też zerujemy nasze odpowiedzi
                 if (CurrentWriteState.CameraFound != 0 || CurrentWriteState.CameraMoved != 0)
                 {
                     CurrentWriteState.CameraFound = 0;
                     CurrentWriteState.CameraMoved = 0;
                     Log.Debug("S{Id} [VISION]: PLC reset CameraRequest. Resetting PC flags.", StationId);
                 }
-                continue; // Czekamy na kolejne żądanie
+                continue;
             }
 
             string currentDmc = CurrentReadState.DMCCamera;
@@ -295,14 +298,20 @@ public abstract class StationProcessorBase
                 continue;
             }
 
-            // 2. Przeszukujemy folder źródłowy
             try
             {
-                string[] files = Directory.GetFiles(_visionSourcePath);
+                // Używamy EnumerateDirectories dla mniejszej alokacji pamięci w pętli
+                var directories = Directory.EnumerateDirectories(_visionSourcePath);
 
-                foreach (string file in files)
+                foreach (string dirPath in directories)
                 {
-                    ProcessVisionFile(file, requestMask, currentDmc);
+                    string dirName = Path.GetFileName(dirPath);
+
+                    // Filtrowanie: Przetwarzamy tylko katalogi należące do tej stacji
+                    if (!dirName.StartsWith(stationPrefix, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    ProcessDeviceDirectory(dirPath, dirName, requestMask, currentDmc);
                 }
             }
             catch (Exception ex)
@@ -312,60 +321,82 @@ public abstract class StationProcessorBase
         }
     }
 
-    private void ProcessVisionFile(string filePath, int requestMask, string dmc)
+    private void ProcessDeviceDirectory(string dirPath, string dirName, int requestMask, string dmc)
     {
-        string fileName = Path.GetFileName(filePath);
+        // Szukamy numeru urządzenia w nazwie folderu (np. "CAM1" lub "DMC1")
+        Match match = Regex.Match(dirName, @"(?:CAM|DMC)(\d+)", RegexOptions.IgnoreCase);
+        if (!match.Success || !int.TryParse(match.Groups[1].Value, out int deviceId)) return;
 
-        // Szukamy w nazwie pliku wzorca "Cam01", "Cam12" itd. (Omijamy sztywne "ST1_", żeby klasa była uniwersalna)
-        //Match match = Regex.Match(fileName, @"Cam(\d+)", RegexOptions.IgnoreCase);
-        Match match = Regex.Match(fileName, @"(?:Cam|DMC)(\d+)", RegexOptions.IgnoreCase);
-        if (!match.Success) return; // To nie jest plik z kamery
+        if (deviceId < 1 || deviceId > 32) return;
 
-        // Parsujemy numer kamery (np. "01" -> 1)
-        if (!int.TryParse(match.Groups[1].Value, out int cameraId)) return;
+        int cameraBit = 1 << (deviceId - 1);
 
-        // Sprawdzamy czy numer kamery mieści się w zakresie 1-32
-        if (cameraId < 1 || cameraId > 32) return;
-
-        // Tworzymy bit reprezentujący tę kamerę (Kamera 1 = bit 0, Kamera 2 = bit 1)
-        int cameraBit = 1 << (cameraId - 1);
-
-        // Sprawdzamy używając koniunkcji bitowej, czy PLC prosiło o tę kamerę
         if ((requestMask & cameraBit) != 0)
         {
-            // KROK A: ZGŁASZAMY ZNALEZIENIE (Ustawiamy bit operatorem OR)
+            var fileEnumerable = Directory.EnumerateFiles(dirPath);
+
+            // Zabezpieczenie: Sprawdzamy czy w katalogu fizycznie znajduje się choć jeden plik
+            if (!fileEnumerable.Any())
+            {
+                // Katalog jest pusty – kamera/czytnik jeszcze nic nie zapisały. 
+                // Nie podnosimy flagi CameraFound ani nie wykonujemy przenoszenia.
+                return;
+            }
+
+            // Potwierdzamy znalezienie zdjęć danej kamery (ustawiamy bit w CameraFound)
             CurrentWriteState.CameraFound |= cameraBit;
 
-            // KROK B: TWORZYMY STRUKTURĘ DOCELOWĄ (Rok/Miesiąc/Dzień/DMC)
+            // Tworzymy strukturę docelową: Rok/Miesiąc/Dzień/DMC/Kamera
             DateTime now = DateTime.Now;
-            string targetDir = Path.Combine(_visionDestPath, now.Year.ToString(), now.Month.ToString("D2"), now.Day.ToString("D2"), dmc, GetStationCameraName(fileName));
+            string targetDir = Path.Combine(_visionDestPath, now.Year.ToString(), now.Month.ToString("D2"), now.Day.ToString("D2"), dmc, dirName);
+
+            // Nazwa folderu docelowego jest identyczna z folderem źródłowym
             Directory.CreateDirectory(targetDir);
 
-            // KROK C: PRZYGOTOWANIE NOWEJ NAZWY PLIKU
-            // Sprawdzamy, czy plik już nie ma przedrostka DMC (na wypadek dziwnych zapętleń)
-            string newFileName = fileName.StartsWith(dmc) ? fileName : $"{dmc}_{fileName}";
-            string targetFilePath = Path.Combine(targetDir, newFileName);
+            // Próbujemy przenieść wszystkie pliki z katalogu źródłowego do docelowego
+            bool allFilesMovedSuccessfully = MoveFilesInDirectory(dirPath, targetDir, dmc);
 
-            // KROK D: PRÓBA PRZENIESIENIA Z BLOKADĄ (FILE LOCK RETRY)
-            bool moved = TryMoveFileWithRetry(filePath, targetFilePath, maxRetries: 10, delayMs: 50);
-
-            if (moved)
+            if (allFilesMovedSuccessfully)
             {
-                // ZGŁASZAMY SUKCES DO PLC
+                // Zgłaszamy sukces do PLC (ustawiamy bit w CameraMoved)
                 CurrentWriteState.CameraMoved |= cameraBit;
-                Log.Debug("S{Id} [VISION]: Camera {CamId} -> File moved successfully.", StationId, cameraId);
-            }
-            else
-            {
-                Log.Warning("S{Id} [VISION]: Camera {CamId} -> File locked by another process (camera still writing?). Skipped this cycle.", StationId, cameraId);
             }
         }
     }
 
-    /// <summary>
-    /// Algorytm ponowień (Retry Pattern). Jeśli kamera przemysłowa wciąż zapisuje plik, 
-    /// dostaniemy wyjątek IOException. Czekamy 50ms i próbujemy ponownie (max 500ms).
-    /// </summary>
+    private bool MoveFilesInDirectory(string sourceDir, string targetDir, string dmc)
+    {
+        bool allSuccess = true;
+        bool anyFilesProcessed = false;
+
+        var files = Directory.EnumerateFiles(sourceDir);
+
+        foreach (string filePath in files)
+        {
+            anyFilesProcessed = true;
+            string fileName = Path.GetFileName(filePath);
+
+            // Doklejanie DMC do nazwy pliku, zapobiegając wielokrotnemu doklejeniu w razie błędów
+            string newFileName = fileName.StartsWith(dmc, StringComparison.OrdinalIgnoreCase) ? fileName : $"{dmc}_{fileName}";
+            string targetFilePath = Path.Combine(targetDir, newFileName);
+
+            bool moved = TryMoveFileWithRetry(filePath, targetFilePath, maxRetries: 10, delayMs: 50);
+
+            if (moved)
+            {
+                Log.Debug("S{Id} [VISION]: File {File} moved successfully.", StationId, newFileName);
+            }
+            else
+            {
+                Log.Warning("S{Id} [VISION]: File {File} locked by another process. Skipped this cycle.", StationId, fileName);
+                allSuccess = false; // Błąd przeniesienia choć jednego pliku blokuje flagę CameraMoved dla PLC
+            }
+        }
+
+        // Jeśli folder był pusty, PLC nie powinno otrzymać sygnału wykonania, dopóki kamera nie wrzuci plików
+        return allSuccess && anyFilesProcessed;
+    }
+
     private bool TryMoveFileWithRetry(string source, string dest, int maxRetries, int delayMs)
     {
         for (int i = 0; i < maxRetries; i++)
@@ -389,31 +420,4 @@ public abstract class StationProcessorBase
         }
         return false;
     }
-
-    public static string GetStationCameraName(string fileName)
-    {
-        string name = Path.GetFileNameWithoutExtension(fileName);
-
-        string st = "X";
-        string deviceType = "CAM";
-        string deviceNo = "0X";
-
-        var stMatch = Regex.Match(name, @"St(\d+)", RegexOptions.IgnoreCase);
-        if (stMatch.Success)
-        {
-            st = stMatch.Groups[1].Value;
-        }
-
-        var deviceMatch = Regex.Match(name, @"(CAM|DMC)(\d+)", RegexOptions.IgnoreCase);
-        if (deviceMatch.Success)
-        {
-            deviceType = deviceMatch.Groups[1].Value;
-            deviceNo = int.Parse(deviceMatch.Groups[2].Value).ToString("00");
-        }
-
-        return $"St{st}_{deviceType}{deviceNo}";
-    }
-
-
-
 }

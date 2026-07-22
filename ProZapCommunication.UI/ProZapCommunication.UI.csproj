@@ -7,7 +7,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <Platforms>AnyCPU;x64</Platforms>
+    <ApplicationIcon>Images\pro_zap_niebieskie2_xpM_1.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Images\pro_zap_niebieskie2_xpM_1.ico" />
+    <None Remove="licenses.licx" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="MaterialDesignThemes" Version="5.3.2" />
@@ -26,7 +32,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="config\appsettings.json">
+    <Resource Include="Images\PRO_ZAP_Light2.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Content Include="Images\pro_zap_niebieskie2_xpM_1.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <EmbeddedResource Include="licenses.licx" />
+    <Resource Include="Images\PRO_ZAP_Rev.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

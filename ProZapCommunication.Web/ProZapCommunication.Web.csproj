@@ -8,11 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="wwwroot\images\PRO_ZAP_Light2.png" />
-    <Content Remove="wwwroot\images\PRO_ZAP_Rev.png" />
     <Content Remove="wwwroot\images\PRO_ZAP_Top.jpg" />
     <Content Remove="wwwroot\images\PRO_ZAP_TOP.tif" />
-    <Content Remove="wwwroot\images\st1_1.jpg" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,15 +21,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="wwwroot\images\PRO_ZAP_Light2.png">
+    <Content Update="wwwroot\images\PRO_ZAP_Light2.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="wwwroot\images\PRO_ZAP_Rev.png">
+    </Content>
+    <Content Update="wwwroot\images\PRO_ZAP_Rev.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="wwwroot\images\st1_1.jpg">
+    </Content>
+    <Content Update="wwwroot\images\st1_1.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
+    </Content>
   </ItemGroup>
 
 </Project>

@@ -3,7 +3,11 @@
 public class AppConfig
 {
     public string ConnectionString { get; set; }
+    // Nowa właściwość określająca limit reworków
+    public int MaxReworkAllowed { get; set; }
+
     public List<PlcConfig> PlcDevices { get; set; } = new List<PlcConfig>();
+
 }
 
 public class PlcConfig

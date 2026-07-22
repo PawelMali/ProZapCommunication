@@ -2,7 +2,16 @@
 
 public class Station6Result : StationResultMfsBase
 {
-
+    public double Initial_static_unbalance { get; set; }
+    public double Final_static_unbalance { get; set; }
+    public double Runout { get; set; }
+    public double Initial_moment_unbalance { get; set; }
+    public double Final_moment_unbalance { get; set; }
+    public double Chamber { get; set; }
+    public double Initial_static_unbalance_angle { get; set; }
+    public double Final_static_unbalance_angle { get; set; }
+    public double Rpm { get; set; }
+    public double Current { get; set; }
 
 
 

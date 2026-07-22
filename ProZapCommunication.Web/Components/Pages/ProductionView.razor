@@ -27,6 +27,7 @@
                 <MudSelectItem Value="5">MFS 1</MudSelectItem>
                 <MudSelectItem Value="6">MFS 2</MudSelectItem>
                 <MudSelectItem Value="7">MFS 3</MudSelectItem>
+                <MudSelectItem Value="8">Rework</MudSelectItem>
             </MudSelect>
         </MudItem>
         <MudItem xs="12" sm="4" md="2">
@@ -51,12 +52,19 @@
 </MudPaper>
 
 <div class="mb-4 d-flex gap-2">
-    <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Download"
-               OnClick="DownloadCurrentTabExcel" Size="Size.Medium">
+    <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Download" OnClick='() => DownloadCurrentTabExcel()' Size="Size.Medium" Disabled="@(isLoading || isExporting)">
+        @if (isExporting)
+        {
+            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+        }
         Export Current View to Excel
     </MudButton>
-    <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Description"
-               OnClick="DownloadCurrentTabCsv" Size="Size.Medium">
+    
+    <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Description" OnClick='() => DownloadCurrentTabCsv()' Size="Size.Medium" Disabled="@(isLoading || isExporting)">
+        @if (isExporting)
+        {
+            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+        }
         Export Current View to CSV
     </MudButton>
 </div>
@@ -105,7 +113,7 @@ else
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.Reference_Number" Title="Reference number" />
 
-@*                     <PropertyColumn Property="x => x.Grommet_Left_Bottom_Presence_Cam_1Text" HeaderStyle="white-space: nowrap; text-align: center;" CellStyle="text-align: center;"> *@
+                    @*                     <PropertyColumn Property="x => x.Grommet_Left_Bottom_Presence_Cam_1Text" HeaderStyle="white-space: nowrap; text-align: center;" CellStyle="text-align: center;"> *@
                     <PropertyColumn Property="x => x.Grommet_Left_Bottom_Presence_Cam_1Text" HeaderStyle="white-space: nowrap;">
                         <HeaderTemplate>Grommet Left <br /> Bottom Presence <br /> CAM1 Status</HeaderTemplate>
                         <CellTemplate>
@@ -660,7 +668,7 @@ else
                         </CellTemplate>
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.Motor_Status" Title="Motor Status Value" />
-                    <PropertyColumn Property="x => x.CycleTime" HeaderStyle="white-space: nowrap;" >
+                    <PropertyColumn Property="x => x.CycleTime" HeaderStyle="white-space: nowrap;">
                         <HeaderTemplate>Cycle<br />Time (s)</HeaderTemplate>
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.Reference_Number" Title="Reference number" />
@@ -714,7 +722,7 @@ else
                             @($"{context.Item.Screw1_Torque} Nm")
                         </CellTemplate>
                     </PropertyColumn>
-                   <PropertyColumn Property="x => x.Screw1_Angle" HeaderStyle="white-space: nowrap;">
+                    <PropertyColumn Property="x => x.Screw1_Angle" HeaderStyle="white-space: nowrap;">
                         <HeaderTemplate>
                             Screw 1<br />Angle
                         </HeaderTemplate>
@@ -807,6 +815,47 @@ else
                 </Columns>
                 <PagerContent>
                     <MudDataGridPager T="Station5Result" PageSizeOptions="new int[] { 15, 30, 50, 100 }" />
+                </PagerContent>
+            </MudDataGrid>
+            break;
+
+        case 6:
+            <MudDataGrid @key="@("station6")" @ref="gridStation6" T="Station6Result" Items="@station6Data" Filterable="true" SortMode="SortMode.Multiple" QuickFilter="@QuickFilterStation6" Bordered="true" Dense="true" Hover="true">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">MFS 1 Logs</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="searchString6" Placeholder="Quick Search (SN...)" Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true" />
+                </ToolBarContent>
+
+                <Columns>
+                    <PropertyColumn Property="x => x.Timestamp" Title="Timestamp" Format="yyyy-MM-dd HH:mm:ss" />
+                    <PropertyColumn Property="x => x.Motor_SN" Title="Motor SN" />
+                    <PropertyColumn Property="x => x.MotorStatusText" Title="Motor Status">
+                        <CellTemplate>
+                            <MudChip Color="@GetMainStatusColor(context.Item.Motor_Status)" Size="Size.Small">
+                                @context.Item.MotorStatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Motor_Status" Title="Motor Status Value" />
+                    <PropertyColumn Property="x => x.CycleTime" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Cycle<br />Time (s)</HeaderTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Final_static_unbalance" Format="N2" Title="Initial static unbalance" />
+                    <PropertyColumn Property="x => x.Final_static_unbalance" Format="N2" Title="Final static unbalance" />
+                    <PropertyColumn Property="x => x.Runout" Format="N2" Title="Runout" />
+                    <PropertyColumn Property="x => x.Initial_moment_unbalance" Format="N2" Title="Initial moment unbalance" />
+                    <PropertyColumn Property="x => x.Final_moment_unbalance" Format="N2" Title="Final moment unbalance" />
+                    <PropertyColumn Property="x => x.Chamber" Format="N2" Title="Chamber" />
+                    <PropertyColumn Property="x => x.Initial_static_unbalance_angle" Format="N2" Title="Initial static unbalance angle" />
+                    <PropertyColumn Property="x => x.Final_static_unbalance_angle" Format="N2" Title="Final static unbalance angle" />
+                    <PropertyColumn Property="x => x.Rpm" Format="N2" Title="Rpm" />
+                    <PropertyColumn Property="x => x.Current" Format="N2" Title="Current" />                
+                    
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="Station6Result" PageSizeOptions="new int[] { 15, 30, 50, 100 }" />
                 </PagerContent>
             </MudDataGrid>
             break;
@@ -1066,6 +1115,56 @@ else
                 </PagerContent>
             </MudDataGrid>
             break;
+
+
+        case 8:
+            <MudDataGrid @key="@("station8")" @ref="gridStation8" T="Station8Result" Items="@station8Data" Filterable="true" SortMode="SortMode.Multiple" QuickFilter="@QuickFilterStation8"
+                         PageSize="15" PagerVisible="true" Bordered="true" Dense="true" Hover="true">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">REWORK Logs</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="searchString8" Placeholder="Quick Search (SN...)" Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Immediate="true" />
+                </ToolBarContent>
+
+                <Columns>
+                    <PropertyColumn Property="x => x.Timestamp" Title="Timestamp" Format="yyyy-MM-dd HH:mm:ss" />
+                    <PropertyColumn Property="x => x.SN" Title="SN/Motor" />
+                    <PropertyColumn Property="x => x.SNStatusText" Title="SN/Motor Status">
+                        <CellTemplate>
+                            <MudChip Color="@GetMainStatusColor(context.Item.SN_Status)" Size="Size.Small">
+                                @context.Item.SNStatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.SN_Status" Title="SN/Motor Status Value" />
+
+                    <PropertyColumn Property="x => x.Radiator_SN" Title="Radiator SN" />
+                    <PropertyColumn Property="x => x.RadiatorStatusText" Title="Radiator Status">
+                        <CellTemplate>
+                            <MudChip Color="@GetMainStatusColor(context.Item.Radiator_Status)" Size="Size.Small">
+                                @context.Item.RadiatorStatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Radiator_Status" Title="Radiator Status Value" />
+
+                    <PropertyColumn Property="x => x.Mfs_SN" Title="MFS SN" />
+                    <PropertyColumn Property="x => x.MfsStatusText" Title="MFS Status">
+                        <CellTemplate>
+                            <MudChip Color="@GetMainStatusColor(context.Item.Mfs_Status)" Size="Size.Small">
+                                @context.Item.MfsStatusText
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Mfs_Status" Title="MFS Status Value" />
+                    <PropertyColumn Property="x => x.ReworkCode" Title="Rework Code" />
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="Station8Result" PageSizeOptions="new int[] { 15, 30, 50, 100 }" />
+                </PagerContent>
+            </MudDataGrid>
+            break;
     }
 }
 
@@ -1074,8 +1173,12 @@ else
     private DateTime? dateFrom = DateTime.Today.AddDays(-1);
     private DateTime? dateTo = DateTime.Today.AddDays(1).AddSeconds(-1);
     private int? filterStatus;
+    private bool isExporting = false; // flaga informująca o trwającym eksporcie danych
     private bool isLoading = false;
     private int selectedStationId = 1; // Domyślnie wybrana stacja 1
+
+    private const int MaxExportRows = 20000;
+
 
     // Referencje do obiektów gridów
     private MudDataGrid<Station1Result>? gridStation1;
@@ -1085,6 +1188,7 @@ else
     private MudDataGrid<Station5Result>? gridStation5;
     private MudDataGrid<Station6Result>? gridStation6;
     private MudDataGrid<Station7Result>? gridStation7;
+    private MudDataGrid<Station8Result>? gridStation8;
 
     private IEnumerable<Station1Result> station1Data = new List<Station1Result>();
     private IEnumerable<Station2Result> station2Data = new List<Station2Result>();
@@ -1093,6 +1197,7 @@ else
     private IEnumerable<Station5Result> station5Data = new List<Station5Result>();
     private IEnumerable<Station6Result> station6Data = new List<Station6Result>();
     private IEnumerable<Station7Result> station7Data = new List<Station7Result>();
+    private IEnumerable<Station8Result> station8Data = new List<Station8Result>();
 
     private string searchString1 = string.Empty;
     private string searchString2 = string.Empty;
@@ -1101,6 +1206,7 @@ else
     private string searchString5 = string.Empty;
     private string searchString6 = string.Empty;
     private string searchString7 = string.Empty;
+    private string searchString8 = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -1144,6 +1250,9 @@ else
                 case 7:
                     station7Data = await Repository.GetStationDataAsync<Station7Result>(7, dateFrom.Value, dateTo.Value, filterStatus);
                     break;
+                case 8:
+                    station8Data = await Repository.GetStationDataAsync<Station8Result>(8, dateFrom.Value, dateTo.Value, filterStatus);
+                    break;
             }
 
             if (isManualRefresh)
@@ -1170,6 +1279,7 @@ else
         station5Data = Enumerable.Empty<Station5Result>();
         station6Data = Enumerable.Empty<Station6Result>();
         station7Data = Enumerable.Empty<Station7Result>();
+        station8Data = Enumerable.Empty<Station8Result>();
     }
 
 
@@ -1179,126 +1289,238 @@ else
     
     private async Task DownloadCurrentTabExcel()
     {
-        byte[] fileBytes;
-        string fileName;
+        if (isExporting) return;
 
-        switch (selectedStationId)
+        try
         {
-            case 1:
-                {
-                    var data = gridStation1.FilteredItems;
-                    fileBytes = ExportService.ExportFilteredStationToExcel(data, "CRFM 1");
-                    fileName = $"Production_CRFM1_{DateTime.Now:yyyyMMdd}.xlsx";
-                    break;
-                }
+            isExporting = true;
+            StateHasChanged(); // Wymuszenie odświeżenia UI w celu zablokowania przycisków
+            await Task.Yield();
 
-            case 2:
-                {
-                    var data = gridStation2.FilteredItems;
-                    fileBytes = ExportService.ExportFilteredStationToExcel(data, "CRFM 2");
-                    fileName = $"Production_CRFM2_{DateTime.Now:yyyyMMdd}.xlsx";
-                    break;
-                }
-            case 3:
-                {
-                    var data = gridStation3.FilteredItems;
-                    fileBytes = ExportService.ExportFilteredStationToExcel(data, "CRFM 3");
-                    fileName = $"Production_CRFM3_{DateTime.Now:yyyyMMdd}.xlsx";
-                    break;
-                }
-            case 4:
-                {
-                    var data = gridStation4.FilteredItems;
-                    fileBytes = ExportService.ExportFilteredStationToExcel(data, "CRFM 4");
-                    fileName = $"Production_CRFM4_{DateTime.Now:yyyyMMdd}.xlsx";
-                    break;
-                }
-            case 5:
-                {
-                    var data = gridStation5.FilteredItems;
-                    fileBytes = ExportService.ExportFilteredStationToExcel(data, "MSF 1");
-                    fileName = $"Production_MSF1_{DateTime.Now:yyyyMMdd}.xlsx";
-                    break;
-                }
-            case 6:
-                {
-                    var data = gridStation6.FilteredItems;
-                    fileBytes = ExportService.ExportFilteredStationToExcel(data, "MSF 2");
-                    fileName = $"Production_MSF2_{DateTime.Now:yyyyMMdd}.xlsx";
-                    break;
-                }
-            case 7:
-                {
-                    var data = gridStation7.FilteredItems;
-                    fileBytes = ExportService.ExportFilteredStationToExcel(data, "MFS3");
-                    fileName = $"Production_MFS3_{DateTime.Now:yyyyMMdd}.xlsx";
-                    break;
-                }
+            byte[] fileBytes;
+            string fileName;
 
-            default:
-                return;
+            switch (selectedStationId)
+            {
+                case 1:
+                    {
+                        var data = gridStation1?.FilteredItems;
+                        if (!ValidateExportData(data)) return;
+
+                        fileBytes = ExportService.ExportFilteredStationToExcel(data!, "CRFM 1");
+                        fileName = $"Production_CRFM1_{DateTime.Now:yyyyMMdd}.xlsx";
+                        break;
+                    }
+                case 2:
+                    {
+                        var data = gridStation2?.FilteredItems;
+                        if (!ValidateExportData(data)) return;
+
+                        fileBytes = ExportService.ExportFilteredStationToExcel(data!, "CRFM 2");
+                        fileName = $"Production_CRFM2_{DateTime.Now:yyyyMMdd}.xlsx";
+                        break;
+                    }
+                case 3:
+                    {
+                        var data = gridStation3?.FilteredItems;
+                        if (!ValidateExportData(data)) return;
+
+                        fileBytes = ExportService.ExportFilteredStationToExcel(data!, "CRFM 3");
+                        fileName = $"Production_CRFM3_{DateTime.Now:yyyyMMdd}.xlsx";
+                        break;
+                    }
+                case 4:
+                    {
+                        var data = gridStation4?.FilteredItems;
+                        if (!ValidateExportData(data)) return;
+
+                        fileBytes = ExportService.ExportFilteredStationToExcel(data!, "CRFM 4");
+                        fileName = $"Production_CRFM4_{DateTime.Now:yyyyMMdd}.xlsx";
+                        break;
+                    }
+                case 5:
+                    {
+                        var data = gridStation5?.FilteredItems;
+                        if (!ValidateExportData(data)) return;
+
+                        fileBytes = ExportService.ExportFilteredStationToExcel(data!, "MSF 1");
+                        fileName = $"Production_MSF1_{DateTime.Now:yyyyMMdd}.xlsx";
+                        break;
+                    }
+                case 6:
+                    {
+                        var data = gridStation6?.FilteredItems;
+                        if (!ValidateExportData(data)) return;
+
+                        fileBytes = ExportService.ExportFilteredStationToExcel(data!, "MSF 2");
+                        fileName = $"Production_MSF2_{DateTime.Now:yyyyMMdd}.xlsx";
+                        break;
+                    }
+                case 7:
+                    {
+                        var data = gridStation7?.FilteredItems;
+                        if (!ValidateExportData(data)) return;
+
+                        fileBytes = ExportService.ExportFilteredStationToExcel(data!, "MFS3");
+                        fileName = $"Production_MFS3_{DateTime.Now:yyyyMMdd}.xlsx";
+                        break;
+                    }
+                case 8:
+                    {
+                        var data = gridStation8?.FilteredItems;
+                        if (!ValidateExportData(data)) return;
+
+                        fileBytes = ExportService.ExportFilteredStationToExcel(data!, "REWORK");
+                        fileName = $"Production_REWORK_{DateTime.Now:yyyyMMdd}.xlsx";
+                        break;
+                    }
+                default:
+                    return;
+            }
+
+            await JS.InvokeVoidAsync(
+                "downloadFileFromBytes",
+                fileName,
+                Convert.ToBase64String(fileBytes));
+
+            Snackbar.Add("Filtered view exported to Excel.", Severity.Success);
         }
-
-        await JS.InvokeVoidAsync(
-            "downloadFileFromBytes",
-            fileName,
-            Convert.ToBase64String(fileBytes));
-
-        Snackbar.Add("Filtered view exported to Excel.", Severity.Success);
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error during Excel export: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isExporting = false;
+            StateHasChanged();
+        }
     }
 
     private async Task DownloadCurrentTabCsv()
     {
-        byte[] fileBytes;
-        string fileName;
+        if (isExporting) return;
 
-        if (selectedStationId == 1 )
+        try
         {
-            var data = gridStation1.FilteredItems;
-            fileBytes = ExportService.ExportFilteredStationToCsv(data);
-            fileName = $"Production_CRMF1_{DateTime.Now:yyyyMMdd}.csv";
-        }
-        else if (selectedStationId == 2 )
-        {
-            var data = gridStation2.FilteredItems;
-            fileBytes = ExportService.ExportFilteredStationToCsv(data);
-            fileName = $"Production_CRMF2_{DateTime.Now:yyyyMMdd}.csv";
-        }
-        else if (selectedStationId == 3)
-        {
-            var data = gridStation3.FilteredItems;
-            fileBytes = ExportService.ExportFilteredStationToCsv(data);
-            fileName = $"Production_CRMF3_{DateTime.Now:yyyyMMdd}.csv";
-        }
-        else if (selectedStationId == 4)
-        {
-            var data = gridStation4.FilteredItems;
-            fileBytes = ExportService.ExportFilteredStationToCsv(data);
-            fileName = $"Production_CRMF4_{DateTime.Now:yyyyMMdd}.csv";
-        }
-        else if (selectedStationId == 5)
-        {
-            var data = gridStation5.FilteredItems;
-            fileBytes = ExportService.ExportFilteredStationToCsv(data);
-            fileName = $"Production_MSF1_{DateTime.Now:yyyyMMdd}.csv";
-        }
-        else if (selectedStationId == 6)
-        {
-            var data = gridStation6.FilteredItems;
-            fileBytes = ExportService.ExportFilteredStationToCsv(data);
-            fileName = $"Production_MSF2_{DateTime.Now:yyyyMMdd}.csv";
-        }
-        else if (selectedStationId == 7)
-        {
-            var data = gridStation7.FilteredItems;
-            fileBytes = ExportService.ExportFilteredStationToCsv(data);
-            fileName = $"Production_MSF3_{DateTime.Now:yyyyMMdd}.csv";
-        }
-        else return;
+            isExporting = true;
+            StateHasChanged(); // Wymuszenie odświeżenia UI w celu zablokowania przycisków
+            await Task.Yield();
 
-        await JS.InvokeVoidAsync("downloadFileFromBytes", fileName, Convert.ToBase64String(fileBytes));
-        Snackbar.Add("Filtered view exported to CSV.", Severity.Success);
+            byte[] fileBytes;
+            string fileName;
+
+            switch (selectedStationId)
+            {
+                case 1:
+                    {
+                        var data = gridStation1?.FilteredItems;
+                        if (!ValidateExportData(data)) return;
+
+                        fileBytes = ExportService.ExportFilteredStationToCsv(data!);
+                        fileName = $"Production_CRMF1_{DateTime.Now:yyyyMMdd}.csv";
+                        break;
+                    }
+                case 2:
+                    {
+                        var data = gridStation2?.FilteredItems;
+                        if (!ValidateExportData(data)) return;
+
+                        fileBytes = ExportService.ExportFilteredStationToCsv(data!);
+                        fileName = $"Production_CRMF2_{DateTime.Now:yyyyMMdd}.csv";
+                        break;
+                    }
+                case 3:
+                    {
+                        var data = gridStation3?.FilteredItems;
+                        if (!ValidateExportData(data)) return;
+
+                        fileBytes = ExportService.ExportFilteredStationToCsv(data!);
+                        fileName = $"Production_CRMF3_{DateTime.Now:yyyyMMdd}.csv";
+                        break;
+                    }
+                case 4:
+                    {
+                        var data = gridStation4?.FilteredItems;
+                        if (!ValidateExportData(data)) return;
+
+                        fileBytes = ExportService.ExportFilteredStationToCsv(data!);
+                        fileName = $"Production_CRMF4_{DateTime.Now:yyyyMMdd}.csv";
+                        break;
+                    }
+                case 5:
+                    {
+                        var data = gridStation5?.FilteredItems;
+                        if (!ValidateExportData(data)) return;
+
+                        fileBytes = ExportService.ExportFilteredStationToCsv(data!);
+                        fileName = $"Production_MSF1_{DateTime.Now:yyyyMMdd}.csv";
+                        break;
+                    }
+                case 6:
+                    {
+                        var data = gridStation6?.FilteredItems;
+                        if (!ValidateExportData(data)) return;
+
+                        fileBytes = ExportService.ExportFilteredStationToCsv(data!);
+                        fileName = $"Production_MSF2_{DateTime.Now:yyyyMMdd}.csv";
+                        break;
+                    }
+                case 7:
+                    {
+                        var data = gridStation7?.FilteredItems;
+                        if (!ValidateExportData(data)) return;
+
+                        fileBytes = ExportService.ExportFilteredStationToCsv(data!);
+                        fileName = $"Production_MSF3_{DateTime.Now:yyyyMMdd}.csv";
+                        break;
+                    }
+                case 8:
+                    {
+                        var data = gridStation8?.FilteredItems;
+                        if (!ValidateExportData(data)) return;
+
+                        fileBytes = ExportService.ExportFilteredStationToCsv(data!);
+                        fileName = $"Production_REWORK_{DateTime.Now:yyyyMMdd}.csv";
+                        break;
+                    }
+                default:
+                    return;
+            }
+
+            await JS.InvokeVoidAsync("downloadFileFromBytes", fileName, Convert.ToBase64String(fileBytes));
+            Snackbar.Add("Filtered view exported to CSV.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error during CSV export: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isExporting = false;
+            StateHasChanged();
+        }
     }
+
+    // Pomocnicza metoda walidująca dane przed eksportem
+    private bool ValidateExportData<T>(IEnumerable<T>? data)
+    {
+        if (data == null || !data.Any())
+        {
+            Snackbar.Add("Empty data to export", Severity.Warning);
+            return false;
+        }
+
+        int count = data.Count();
+        if (count > MaxExportRows)
+        {
+            Snackbar.Add($"The maximum number of rows that can be exported is {MaxExportRows:#,##0}. You selected {count:#,##0} rows. Please modify the date range or filters.", Severity.Warning);
+
+            return false;
+        }
+
+        return true;
+    }
+
 
     private bool QuickFilterStation1(Station1Result item) => FilterResult(item, searchString1, item.SN, item.Radiator_SN);
     private bool QuickFilterStation2(Station2Result item) => FilterResult(item, searchString2, item.SN, item.MFS_SN);
@@ -1307,6 +1529,7 @@ else
     private bool QuickFilterStation5(Station5Result item) => FilterResult(item, searchString5, item.Motor_SN);
     private bool QuickFilterStation6(Station6Result item) => FilterResult(item, searchString6, item.Motor_SN);
     private bool QuickFilterStation7(Station7Result item) => FilterResult(item, searchString7, item.Motor_SN, item.Mfs_SN);
+    private bool QuickFilterStation8(Station8Result item) => FilterResult(item, searchString8, item.SN, item.Radiator_SN, item.Motor_SN, item.Mfs_SN);
 
     private bool FilterResult(object item, string searchString, params string[] fieldsToSearch)
     {
@@ -1372,7 +1595,6 @@ else
 
 
     #endregion
-
 }
 
 

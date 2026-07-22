@@ -9,7 +9,7 @@
         xmlns:local="clr-namespace:ProZapCommunication.UI"
         mc:Ignorable="d"
         WindowState="Maximized"
-        Title="MainWindow" Height="450" Width="800"
+        Title="Prozap Traceability - Station Manager Dashboard" Height="450" Width="800"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         TextElement.FontWeight="Regular"
         TextElement.FontSize="14"
@@ -29,29 +29,67 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <materialDesign:ColorZone Mode="PrimaryMid" Padding="16" Grid.Row="0">
-            <TextBlock HorizontalAlignment="Center" FontSize="22" FontWeight="Bold" Text="ProZapCommunication - Station Manager Dashboard"/>
+        <materialDesign:ColorZone Background="#0078B8" Padding="0" Grid.Row="0">
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Logo -->
+                <Image Grid.Column="0"
+               Width="82"
+
+               Margin="0"
+               Source="/Images/PRO_ZAP_Rev.png"/>
+
+                <!-- Tytuł -->
+                <TextBlock Grid.Column="1"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           FontSize="22"
+                           FontWeight="Bold"
+                           Foreground="White"
+                           Text="ProZapCommunication - Station Manager Dashboard"/>
+
+                <TextBlock x:Name="BuildDateTextBlock" Grid.Column="1"
+                           Margin="0,0,10,0"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Center"
+                           FontSize="15"
+                           FontWeight="Normal"
+                           Foreground="White"
+                           />
+            </Grid>
+
         </materialDesign:ColorZone>
 
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <Border Padding="20">
-                <ItemsControl ItemsSource="{Binding Stations}">
+        <Grid Grid.Row="1">
 
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
+            <Image Source="/Images/PRO_ZAP_Light2.png" Width="500" Opacity="0.05" HorizontalAlignment="Center" VerticalAlignment="Bottom" Panel.ZIndex="0"/>
 
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <views:StationDiagnosticsView Width="450"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </Border>
-        </ScrollViewer>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <Border Padding="20">
+                    <ItemsControl ItemsSource="{Binding Stations}">
+
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <views:StationDiagnosticsView Width="450"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Border>
+            </ScrollViewer>
+        </Grid>
 
     </Grid>
 

@@ -37,6 +37,7 @@ public enum PlcTaskStatus : short
     SQLReworkUnknownStatus = 56,
     SQLReworkEmptyDMC = 57,
     SQLReworkDMCNBotFound = 58,
+    SQLReworkMaxAllowed = 59,
 
     PartAlreadyDoneOK = 60,
     PartAlreadyDoneNOK = 61,
