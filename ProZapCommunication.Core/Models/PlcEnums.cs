@@ -15,7 +15,10 @@ public enum PlcTaskType : short
     ReworkMfsSn = 6,
     ReworkMotorSn = 7,
     ReworkRadiatorSn = 8,
-    ReworkCheckDiskSpace = 9
+    ReworkCheckDiskSpace = 9,
+    ReworkCheckRadiator = 10,
+    ReworkCheckMfs = 11,
+    ReworkCheckMotor = 12
 }
 
 public enum PlcTaskStatus : short
@@ -57,9 +60,9 @@ public enum PlcTaskStatus : short
     ReworkSt2 = 3200,
     ReworkSt3 = 3300,
     ReworkSt4 = 3400,
-    ReworkSt5 = 3500,
-    ReworkSt6 = 3600,
-    ReworkSt7 = 3700,
+    ReworkMFS1 = 3500,
+    ReworkMFS2 = 3600,
+    ReworkMFS3 = 3700,
 
 
 

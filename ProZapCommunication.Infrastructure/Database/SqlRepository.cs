@@ -83,7 +83,12 @@ public class SqlRepository : IDatabaseRepository
                             Airduct_Right_Top_Balcony_Cam_10_Status,
                             Airduct_Right_Top_Balcony_Cam_10_Counter,
                             Airduct_Middle_Bottom_Ridge_Cam_11_Status,
-                            Airduct_Middle_Bottom_Ridge_Cam_11_Counter
+                            Airduct_Middle_Bottom_Ridge_Cam_11_Counter,
+
+                            Grommet_Batch_Nr,
+                            Stonegrid_Batch_Nr,
+                            Airduct_Batch_Nr
+
                         )
                         VALUES
                         (
@@ -128,7 +133,11 @@ public class SqlRepository : IDatabaseRepository
                             @Airduct_Right_Top_Balcony_Cam_10_Status,
                             @Airduct_Right_Top_Balcony_Cam_10_Counter,
                             @Airduct_Middle_Bottom_Ridge_Cam_11_Status,
-                            @Airduct_Middle_Bottom_Ridge_Cam_11_Counter
+                            @Airduct_Middle_Bottom_Ridge_Cam_11_Counter,
+
+                            @Grommet_Batch_Nr,
+                            @Stonegrid_Batch_Nr,
+                            @Airduct_Batch_Nr
                         );";
 
 
@@ -179,7 +188,11 @@ public class SqlRepository : IDatabaseRepository
                     Airduct_Right_Top_Balcony_Cam_10_Status = data.Airduct_Right_Top_Balcony_Cam_10_Status,
                     Airduct_Right_Top_Balcony_Cam_10_Counter = data.Airduct_Right_Top_Balcony_Cam_10_Counter,
                     Airduct_Middle_Bottom_Ridge_Cam_11_Status = data.Airduct_Middle_Bottom_Ridge_Cam_11_Status,
-                    Airduct_Middle_Bottom_Ridge_Cam_11_Counter = data.Airduct_Middle_Bottom_Ridge_Cam_11_Counter
+                    Airduct_Middle_Bottom_Ridge_Cam_11_Counter = data.Airduct_Middle_Bottom_Ridge_Cam_11_Counter,
+
+                    Grommet_Batch_Nr = data.Grommet_Batch_Nr,
+                    Stonegrid_Batch_Nr = data.Stonegrid_Batch_Nr,
+                    Airduct_Batch_Nr = data.Airduct_Batch_Nr
                 });
             }
 
@@ -254,7 +267,9 @@ public class SqlRepository : IDatabaseRepository
                             Radiator_Right_Top_Grommet_Cam_9_Counter,
 
                             Shipping_Caps_Disassembly_Status,
-                            Shipping_Caps_Disassembly_Counter
+                            Shipping_Caps_Disassembly_Counter,
+
+                            Grommet_Batch_Nr
                         )
                         VALUES
                         (
@@ -288,7 +303,9 @@ public class SqlRepository : IDatabaseRepository
                             @Radiator_Right_Top_Grommet_Cam_9_Counter,
 
                             @Shipping_Caps_Disassembly_Status,
-                            @Shipping_Caps_Disassembly_Counter
+                            @Shipping_Caps_Disassembly_Counter,
+
+                            @Grommet_Batch_Nr
                         );";
 
         try
@@ -327,8 +344,9 @@ public class SqlRepository : IDatabaseRepository
                     Radiator_Right_Top_Grommet_Cam_9_Counter = data.Radiator_Right_Top_Grommet_Cam_9_Counter,
 
                     Shipping_Caps_Disassembly_Status = data.Shipping_Caps_Disassembly_Status,
-                    Shipping_Caps_Disassembly_Counter = data.Shipping_Caps_Disassembly_Counter
+                    Shipping_Caps_Disassembly_Counter = data.Shipping_Caps_Disassembly_Counter,
 
+                    Grommet_Batch_Nr = data.Grommet_Batch_Nr
                 });
             }
 
@@ -498,8 +516,8 @@ public class SqlRepository : IDatabaseRepository
                             DMC_OCR_Homologation_Part_Number_Counter,
                             DMC_OCR_Supplier_Status,
                             DMC_OCR_Supplier_Counter,
-                            DMC_OCR_Country_Of_Orgin_Status,
-                            DMC_OCR_Country_Of_Orgin_Counter
+                            DMC_OCR_Country_Of_Origin_Status,
+                            DMC_OCR_Country_Of_Origin_Counter
                         )
                         VALUES
                         (
@@ -525,8 +543,8 @@ public class SqlRepository : IDatabaseRepository
                             @DMC_OCR_Homologation_Part_Number_Counter,
                             @DMC_OCR_Supplier_Status,
                             @DMC_OCR_Supplier_Counter,
-                            @DMC_OCR_Country_Of_Orgin_Status,
-                            @DMC_OCR_Country_Of_Orgin_Counter
+                            @DMC_OCR_Country_Of_Origin_Status,
+                            @DMC_OCR_Country_Of_Origin_Counter
                         );";
 
         try
@@ -558,8 +576,8 @@ public class SqlRepository : IDatabaseRepository
                     DMC_OCR_Homologation_Part_Number_Counter = data.DMC_OCR_Homologation_Part_Number_Counter,
                     DMC_OCR_Supplier_Status = data.DMC_OCR_Supplier_Status,
                     DMC_OCR_Supplier_Counter = data.DMC_OCR_Supplier_Counter,
-                    DMC_OCR_Country_Of_Orgin_Status = data.DMC_OCR_Country_Of_Origin_Status,
-                    DMC_OCR_Country_Of_Orgin_Counter = data.DMC_OCR_Country_Of_Origin_Counter
+                    DMC_OCR_Country_Of_Origin_Status = data.DMC_OCR_Country_Of_Origin_Status,
+                    DMC_OCR_Country_Of_Origin_Counter = data.DMC_OCR_Country_Of_Origin_Counter
 
                 });
             }
@@ -634,7 +652,10 @@ public class SqlRepository : IDatabaseRepository
                             Screw3_Counter,
                             Screw3_Program_Number,
                             Screw3_Angle,
-                            Screw3_Torque
+                            Screw3_Torque,
+
+                            Screw_Batch_Nr,
+                            Fan_Batch_Nr
                         )
                         VALUES
                         (
@@ -666,7 +687,10 @@ public class SqlRepository : IDatabaseRepository
                             @Screw3_Counter,
                             @Screw3_Program_Number,
                             @Screw3_Angle,
-                            @Screw3_Torque
+                            @Screw3_Torque,
+
+                            @Screw_Batch_Nr,
+                            @Fan_Batch_Nr
                         );";
 
 
@@ -705,8 +729,10 @@ public class SqlRepository : IDatabaseRepository
                     Screw3_Counter = data.Screw3_Counter,
                     Screw3_Program_Number = data.Screw3_Program_Number,
                     Screw3_Angle = data.Screw3_Angle,
-                    Screw3_Torque = data.Screw3_Torque
+                    Screw3_Torque = data.Screw3_Torque,
 
+                    Screw_Batch_Nr = data.Screw_Batch_Nr,
+                    Fan_Batch_Nr = data.Fan_Batch_Nr
                 });
             }
 
@@ -914,7 +940,11 @@ public class SqlRepository : IDatabaseRepository
                             Screw3_Counter,
                             Screw3_Program_Number,
                             Screw3_Angle,
-                            Screw3_Torque
+                            Screw3_Torque,
+
+                            Screw_Batch_Nr,
+                            Cap_Batch_Nr,
+                            Shraud_Batch_Nr
                         )
                         VALUES
                         (
@@ -967,7 +997,11 @@ public class SqlRepository : IDatabaseRepository
                             @Screw3_Counter,
                             @Screw3_Program_Number,
                             @Screw3_Angle,
-                            @Screw3_Torque
+                            @Screw3_Torque,
+
+                            @Screw_Batch_Nr,
+                            @Cap_Batch_Nr,
+                            @Shraud_Batch_Nr
                         );";
 
 
@@ -1027,8 +1061,11 @@ public class SqlRepository : IDatabaseRepository
                     Screw3_Counter = data.Screw3_Counter,
                     Screw3_Program_Number = data.Screw3_Program_Number,
                     Screw3_Angle = data.Screw3_Angle,
-                    Screw3_Torque = data.Screw3_Torque
+                    Screw3_Torque = data.Screw3_Torque,
 
+                    Screw_Batch_Nr = data.Screw_Batch_Nr,
+                    Cap_Batch_Nr = data.Cap_Batch_Nr,
+                    Shraud_Batch_Nr = data.Shraud_Batch_Nr
                 });
             }
 

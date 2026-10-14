@@ -37,5 +37,5 @@ public class LogixStation2ResultsData
     public short Shipping_Caps_Disassembly_Status = 0;
     public short Shipping_Caps_Disassembly_Counter = 0;
 
-
+    public LogixString Grommet_Batch_Nr = new LogixString();
 }

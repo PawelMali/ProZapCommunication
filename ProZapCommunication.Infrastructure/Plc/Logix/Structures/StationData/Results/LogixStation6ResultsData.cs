@@ -25,4 +25,5 @@ public class LogixStation6ResultsData
     public float Final_static_unbalance_angle = 0;
     public float Rpm = 0;
     public float Current = 0;
+
 }

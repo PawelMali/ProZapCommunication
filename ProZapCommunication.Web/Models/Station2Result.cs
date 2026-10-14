@@ -27,6 +27,8 @@ public class Station2Result : StationResultBase
     public int? Shipping_Caps_Disassembly_Status { get; set; } = 0;
     public int? Shipping_Caps_Disassembly_Counter { get; set; } = 0;
 
+    public string Grommet_Batch_Nr { get; set; } = string.Empty;
+
 
     // ====================================================================
     // WŁAŚCIWOŚCI OBLICZENIOWE DLA MUDDATAGRID (Ignorowane przez Dapper)

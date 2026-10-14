@@ -60,13 +60,13 @@ public class Station5Processor : StationProcessorBase
 
     private bool HandleVerifySNTask()
     {
-        Log.Information("S{Id} [TASK 2]: Verifying SN code: {Dmc}", StationId, _resultsTagName, CurrentReadState.DMC);
+        Log.Information("S{Id} [TASK 2]: Verifying SN code: {Dmc}", StationId, CurrentReadState.DMC);
 
         try
         {
             CurrentWriteState.TaskStatus = DbRepository.CheckMotorSnCurrentStationStatus(StationIdentity, StationId, CurrentReadState.DMC);
 
-            return CurrentWriteState.TaskStatus == 1;
+            return CurrentWriteState.TaskStatus is 1 or >= 3100 and <= 3799; ;
         }
         catch (System.Exception ex)
         {

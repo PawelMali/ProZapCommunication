@@ -83,14 +83,14 @@ public class StationScheduler
                 // REAKCJA NA KRYTYCZNY BŁĄD ROZMIARU STRUKTURY (np. CIP 0x00000013)
                 catch (PlcStructureMismatchException sizeEx)
                 {
-                    job.IsActive = false;
+                   // job.IsActive = false;
                     Log.Fatal("S{Id}: [BLOCK] Job '{JobName}' disabled due to STRUCTURE SIZE MISMATCH! Message: {Msg}",
                         _stationId, job.Name, sizeEx.Message);
                 }
                 // REAKCJA NA KRYTYCZNY BŁĄD BRAKU TAGA W PLC (np. CIP 0x00000104)
                 catch (PlcMissingTagException missingEx)
                 {
-                    job.IsActive = false;
+                   // job.IsActive = false;
                     Log.Fatal("S{Id}: [BLOCK] Job '{JobName}' disabled – TAG DOES NOT EXIST IN PLC! Message: {Msg}",
                         _stationId, job.Name, missingEx.Message);
                 }

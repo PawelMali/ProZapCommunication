@@ -39,7 +39,7 @@ namespace ProZapCommunication.UI
                             rollingInterval: RollingInterval.Day,
                             rollOnFileSizeLimit: true,
                             fileSizeLimitBytes: 10 * 1024 * 1024, // 10 MB
-                            retainedFileCountLimit: 30,
+                            retainedFileCountLimit: 60,
                             outputTemplate: "[{Timestamp:HH:mm:ss.fff} {Level:u3}] {Message:lj}{NewLine}{Exception}"
                         );
                     })

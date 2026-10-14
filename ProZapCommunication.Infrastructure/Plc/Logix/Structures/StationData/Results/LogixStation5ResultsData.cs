@@ -25,6 +25,8 @@ public class LogixStation5ResultsData
 
     public LogixScrewData[] Screw = InitializeArray<LogixScrewData>(3);
 
+    public LogixString Screw_Batch_Nr = new LogixString();
+    public LogixString Fan_Batch_Nr = new LogixString();
 
     public static T[] InitializeArray<T>(Int32 length) where T : new()
     {

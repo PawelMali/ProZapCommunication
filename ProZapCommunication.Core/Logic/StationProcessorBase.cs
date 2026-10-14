@@ -18,6 +18,8 @@ public abstract class StationProcessorBase
 
     protected ILogger Log => Serilog.Log.ForContext("StationIdentity", StationIdentity);
 
+    
+
     // Kolejka FIFO dla zadań generowanych przez PC do wykonania na PLC
     private readonly ConcurrentQueue<int> _pcToPlcTaskQueue = new ConcurrentQueue<int>();
 
@@ -30,8 +32,10 @@ public abstract class StationProcessorBase
     private bool _isTaskProcessing = false;
 
     private string _visionSourcePath;
-    private string _visionDestPath;
+    protected string _visionDestPath;
     private bool _isVisionConfigured = false;
+    private int _lastLoggedCamRequest = 0;
+    private string? _lastLoggedCamDmc;
 
     private DateTime? _taskSentAt;
     private readonly TimeSpan _taskTimeout = TimeSpan.FromSeconds(5);
@@ -282,6 +286,9 @@ public abstract class StationProcessorBase
 
             if (requestMask == 0)
             {
+                _lastLoggedCamRequest = 0;
+                _lastLoggedCamDmc = "";
+
                 if (CurrentWriteState.CameraFound != 0 || CurrentWriteState.CameraMoved != 0)
                 {
                     CurrentWriteState.CameraFound = 0;
@@ -296,6 +303,15 @@ public abstract class StationProcessorBase
             {
                 Log.Warning("S{Id} [VISION]: PLC did not provide a DMC code.", StationId);
                 continue;
+            }
+
+            if (_lastLoggedCamRequest != requestMask || _lastLoggedCamDmc != currentDmc)
+            {
+                Log.Information(
+                    "S{Id} [VISION]: New request {RequestMask} for DMC {Dmc}.", StationId, requestMask, currentDmc);
+
+                _lastLoggedCamRequest = requestMask;
+                _lastLoggedCamDmc = currentDmc;
             }
 
             try
@@ -323,6 +339,9 @@ public abstract class StationProcessorBase
 
     private void ProcessDeviceDirectory(string dirPath, string dirName, int requestMask, string dmc)
     {
+        // Definicja dozwolonych rozszerzeń na sztywno wewnątrz funkcji (wykorzystanie C# 12+ collection expressions)
+        string[] allowedExtensions = [".bmp", ".svg"];
+
         // Szukamy numeru urządzenia w nazwie folderu (np. "CAM1" lub "DMC1")
         Match match = Regex.Match(dirName, @"(?:CAM|DMC)(\d+)", RegexOptions.IgnoreCase);
         if (!match.Success || !int.TryParse(match.Groups[1].Value, out int deviceId)) return;
@@ -333,12 +352,13 @@ public abstract class StationProcessorBase
 
         if ((requestMask & cameraBit) != 0)
         {
-            var fileEnumerable = Directory.EnumerateFiles(dirPath);
+            var fileEnumerable = Directory.EnumerateFiles(dirPath)
+                .Where(f => allowedExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()));
 
-            // Zabezpieczenie: Sprawdzamy czy w katalogu fizycznie znajduje się choć jeden plik
+            // Zabezpieczenie: Sprawdzamy czy w katalogu fizycznie znajduje się choć jeden pliko dozwolonym rozszerzeniu
             if (!fileEnumerable.Any())
             {
-                // Katalog jest pusty – kamera/czytnik jeszcze nic nie zapisały. 
+                // Katalog nie zawiera pożądanych plików – kamera/czytnik jeszcze ich nie zapisały
                 // Nie podnosimy flagi CameraFound ani nie wykonujemy przenoszenia.
                 return;
             }
@@ -353,8 +373,8 @@ public abstract class StationProcessorBase
             // Nazwa folderu docelowego jest identyczna z folderem źródłowym
             Directory.CreateDirectory(targetDir);
 
-            // Próbujemy przenieść wszystkie pliki z katalogu źródłowego do docelowego
-            bool allFilesMovedSuccessfully = MoveFilesInDirectory(dirPath, targetDir, dmc);
+            // Próbujemy przenieść wszystkie pliki z katalogu źródłowego do docelowego, przekazując tablicę z dozwolonymi rozszerzeniami
+            bool allFilesMovedSuccessfully = MoveFilesInDirectory(dirPath, targetDir, dmc, allowedExtensions);
 
             if (allFilesMovedSuccessfully)
             {
@@ -364,12 +384,14 @@ public abstract class StationProcessorBase
         }
     }
 
-    private bool MoveFilesInDirectory(string sourceDir, string targetDir, string dmc)
+    private bool MoveFilesInDirectory(string sourceDir, string targetDir, string dmc, string[] allowedExtensions)
     {
         bool allSuccess = true;
         bool anyFilesProcessed = false;
 
-        var files = Directory.EnumerateFiles(sourceDir);
+        // Filtrujemy pliki zgodnie z przekazanymi rozszerzeniami przed rozpoczęciem iteracji
+        var files = Directory.EnumerateFiles(sourceDir)
+            .Where(f => allowedExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()));
 
         foreach (string filePath in files)
         {
@@ -377,14 +399,14 @@ public abstract class StationProcessorBase
             string fileName = Path.GetFileName(filePath);
 
             // Doklejanie DMC do nazwy pliku, zapobiegając wielokrotnemu doklejeniu w razie błędów
-            string newFileName = fileName.StartsWith(dmc, StringComparison.OrdinalIgnoreCase) ? fileName : $"{dmc}_{fileName}";
-            string targetFilePath = Path.Combine(targetDir, newFileName);
+            // string newFileName = fileName.StartsWith(dmc, StringComparison.OrdinalIgnoreCase) ? fileName : $"{dmc}_{fileName}";
+            string targetFilePath = Path.Combine(targetDir, fileName);
 
-            bool moved = TryMoveFileWithRetry(filePath, targetFilePath, maxRetries: 10, delayMs: 50);
+            bool moved = TryMoveFileWithRetry(filePath, targetFilePath, maxRetries: 20, delayMs: 100);
 
             if (moved)
             {
-                Log.Debug("S{Id} [VISION]: File {File} moved successfully.", StationId, newFileName);
+                Log.Debug("S{Id} [VISION]: File {File} moved successfully.", StationId, fileName);
             }
             else
             {
@@ -406,15 +428,23 @@ public abstract class StationProcessorBase
                 // Używamy Move (wytnie z temp, wklei do docelowego)
                 // W przypadku duplikatu nazwy pliku nadpisze go (true)
                 File.Move(source, dest, overwrite: true);
-                return true;
+
+                if (File.Exists(dest) && !File.Exists(source))
+                    return true;
+
+                Log.Warning("S{Id} File move verification failed. Attempt {Attempt}/{MaxRetries}",
+                    StationId, i + 1, maxRetries);
+
+                Thread.Sleep(delayMs);
             }
-            catch (IOException) // Błąd braku dostępu do pliku (File in use)
+            catch (IOException ex) // Błąd braku dostępu do pliku (File in use)
             {
+                Log.Debug(ex, "S{Id} File move retry {Attempt}/{MaxRetries}", StationId, i + 1, maxRetries);
                 Thread.Sleep(delayMs);
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "S{Id} [VISION]: Unexpected error while moving file.", StationId);
+                Log.Error(ex, "S{Id} Unexpected error while moving file.", StationId);
                 return false; // Inny błąd (np. brak uprawnień) przerywa próbę
             }
         }

@@ -36,4 +36,7 @@ public class Station5ResultsData : IStationProcessData
     public int Screw3_Program_Number { get; set; } = 0;
     public float Screw3_Angle { get; set; } = 0;
     public float Screw3_Torque { get; set; } = 0;
+
+    public string Screw_Batch_Nr { get; set; } = String.Empty;
+    public string Fan_Batch_Nr { get; set; } = String.Empty;
 }

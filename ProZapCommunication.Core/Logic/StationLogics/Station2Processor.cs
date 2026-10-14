@@ -63,7 +63,7 @@ public class Station2Processor : StationProcessorBase
 
     private bool HandleVerifySNTask()
     {
-        Log.Information("S{Id} [TASK 2]: Verifying SN code: {Dmc}", StationId, _resultsTagName, CurrentReadState.DMC);
+        Log.Information("S{Id} [TASK 2]: Verifying SN code: {Dmc}", StationId, CurrentReadState.DMC);
 
         try
         {
@@ -104,7 +104,7 @@ public class Station2Processor : StationProcessorBase
 
     private bool HandleVerifySNMfsTask()
     {
-        Log.Information("S{Id} [TASK 3]: Verifying SN code for MFS: {Dmc}", StationId, _resultsTagName, CurrentReadState.DMC);
+        Log.Information("S{Id} [TASK 3]: Verifying SN code for MFS: {Dmc}", StationId, CurrentReadState.DMC);
 
         try
         {

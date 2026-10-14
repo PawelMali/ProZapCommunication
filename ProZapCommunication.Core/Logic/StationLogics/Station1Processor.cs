@@ -65,13 +65,13 @@ public class Station1Processor : StationProcessorBase
 
     private bool HandleVerifySNTask()
     {
-        Log.Information("S{Id} [TASK 2]: Verifying SN code: {Dmc}", StationId, _resultsTagName, CurrentReadState.DMC);
+        Log.Information("S{Id} [TASK 2]: Verifying SN code: {Dmc}", StationId, CurrentReadState.DMC);
 
         try
         {
             CurrentWriteState.TaskStatus = DbRepository.CheckSnCurrentStationStatus(StationIdentity, StationId, CurrentReadState.DMC);
 
-            return CurrentWriteState.TaskStatus == 1;
+            return CurrentWriteState.TaskStatus is 1 or >= 3100 and <= 3799;
         }
         catch (System.Exception ex)
         {
@@ -83,13 +83,13 @@ public class Station1Processor : StationProcessorBase
 
     private bool HandleVerifySNRadiatorTask()
     {
-        Log.Information("S{Id} [TASK 3]: Verifying SN code for Radiator: {Dmc}", StationId, _resultsTagName, CurrentReadState.DMC);
+        Log.Information("S{Id} [TASK 3]: Verifying SN code for Radiator: {Dmc}", StationId, CurrentReadState.DMC);
 
         try
         {
             CurrentWriteState.TaskStatus = DbRepository.CheckRadiatorSnStatus(StationIdentity, StationId, CurrentReadState.DMC);
 
-            return CurrentWriteState.TaskStatus == 1;
+            return CurrentWriteState.TaskStatus is 1 or >= 3100 and <= 3799;
         }
         catch (System.Exception ex)
         {

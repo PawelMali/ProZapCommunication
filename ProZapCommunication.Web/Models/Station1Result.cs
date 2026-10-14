@@ -38,6 +38,10 @@ public class Station1Result : StationResultBase
     public int? Airduct_Middle_Bottom_Ridge_Cam_11_Status { get; set; } = 0;
     public int? Airduct_Middle_Bottom_Ridge_Cam_11_Counter { get; set; } = 0;
 
+    public string Grommet_Batch_Nr { get; set; } = string.Empty;
+    public string Stonegrid_Batch_Nr { get; set; } = string.Empty;
+    public string Airduct_Batch_Nr { get; set; } = string.Empty;
+
     // ====================================================================
     // WŁAŚCIWOŚCI OBLICZENIOWE DLA MUDDATAGRID (Ignorowane przez Dapper)
     // ====================================================================

@@ -60,7 +60,7 @@ public class Station7Processor : StationProcessorBase
 
     private bool HandleVerifySNTask()
     {
-        Log.Information("S{Id} [TASK 2]: Verifying SN code: {Dmc}", StationId, _resultsTagName, CurrentReadState.DMC);
+        Log.Information("S{Id} [TASK 2]: Verifying SN code: {Dmc}", StationId, CurrentReadState.DMC);
 
         try
         {

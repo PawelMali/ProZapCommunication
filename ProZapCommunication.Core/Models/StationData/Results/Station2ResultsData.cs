@@ -38,4 +38,6 @@ public class Station2ResultsData : IStationProcessData
 
     public int Shipping_Caps_Disassembly_Status { get; set; } = 0;
     public int Shipping_Caps_Disassembly_Counter { get; set; } = 0;
+
+    public string Grommet_Batch_Nr { get; set; }
 }

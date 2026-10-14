@@ -1,5 +1,124 @@
 ﻿@page "/"
+@using System.Diagnostics;
+@inject IJSRuntime JS
+@inject ISnackbar Snackbar
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Pro-Zap Traceability Application</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-6">About</MudText>
+
+<MudPaper Class="pa-4 mb-6" Elevation="2">
+
+    <MudGrid AlignItems="AlignItems.Center" Class="mt-4">
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="6">
+                <MudCardHeader Style="@($"background:{Colors.Blue.Lighten5};")">
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h3" Color="Color.Primary"><b>Z26003 - UKL2 NCAR 2</b></MudText>
+                    </CardHeaderContent>
+                    <CardHeaderAvatar>
+                        <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Large" Color="Color.Primary" />
+                    </CardHeaderAvatar>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText>• PLC Controller Communication Module (Allen-Bradley®)</MudText>
+                    <MudText>• Vision System Photo Management Module</MudText>
+                    <MudText>• Traceability Module</MudText>
+                    <MudText>• Data Export Module</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" md="6" Class="d-flex justify-center">
+            <MudImage Src="images/PRO_ZAP_Light2.png" Alt="PRO-ZAP" Width="300" Fluid="true" />
+        </MudItem>
+    </MudGrid>
+
+    <MudGrid AlignItems="AlignItems.Center" Class="mt-4">
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="6">
+                <MudCardHeader Style="@($"background:{Colors.Blue.Lighten5};")">
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h5" Color="Color.Secondary"><b>Application Information</b></MudText>
+                    </CardHeaderContent>
+                    <CardHeaderAvatar>
+                        <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Medium" Color="Color.Secondary" />
+                    </CardHeaderAvatar>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText><b>Software WEB Version:</b> @Version (@BuildTime) </MudText>
+                    <MudText><b>Software Trace Version:</b> @TraceabilityVersion </MudText>
+                    <MudText Class="mt-2"><b>License:</b> MAHLE Thermal and Fluid Systems Ostrava s.r.o.</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" md="6" Class="d-flex justify-center">
+            <MudImage Src="images/QRCode.png" Alt="QR Code" Width="150" Fluid="true" />
+        </MudItem>
+    </MudGrid>
+
+    <MudGrid AlignItems="AlignItems.Center" Class="mt-4">
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="6">
+                <MudCardHeader Style="@($"background:{Colors.Blue.Lighten5};")">
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h5" Color="Color.Primary"><b>Contact Us</b></MudText>
+                    </CardHeaderContent>
+                    <CardHeaderAvatar>
+                        <MudIcon Icon="@Icons.Material.Filled.ContactMail" Size="Size.Medium" Color="Color.Primary" />
+                    </CardHeaderAvatar>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <MudText>
+                                <b>INTROL PRO-ZAP Sp. z o.o.</b><br />
+                                ul. Grabowska 47a<br />
+                                63-400 Ostrów Wielkopolski<br />
+                                Poland
+                            </MudText>
+                        </MudItem>
+
+                        <MudItem xs="12" md="6">
+                            <MudText>+48 62 73 74 150</MudText>
+                            <MudLink Href="mailto:office@pro-zap.pl">office@pro-zap.pl</MudLink>
+                            <br />
+                            <MudLink Href="mailto:serwis@pro-zap.pl">serwis@pro-zap.pl</MudLink>
+                            <br /><br />
+                            <MudLink Href="https://www.pro-zap.pl" Target="_blank">www.pro-zap.pl</MudLink>
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <MudDivider Class="my-4" />
+
+    <div class="d-flex justify-space-between align-center">
+        <MudText Typo="Typo.caption">
+            © INTROL PRO-ZAP Sp. z o.o. All Rights Reserved.
+        </MudText>
+    </div>
+
+</MudPaper>
 
 
+@code {
+
+    private string Version =>
+        typeof(Program).Assembly.GetName().Version?.ToString() ?? "-";
+
+    private string BuildTime =>
+        System.IO.File.GetLastWriteTime(
+            typeof(Program).Assembly.Location)
+        .ToString("yyyy.MM.dd HH:mm");
+
+
+    private string WPFPatch = @"C:\Prozap Traceability\Trace\ProZapCommunication.UI.exe";
+    private string TraceabilityVersion =>
+        File.Exists(WPFPatch)
+        ? $"{FileVersionInfo.GetVersionInfo(WPFPatch).FileVersion} " + $"({File.GetLastWriteTime(WPFPatch):yyyy.MM.dd HH:mm})"
+        : "-";
+
+
+}

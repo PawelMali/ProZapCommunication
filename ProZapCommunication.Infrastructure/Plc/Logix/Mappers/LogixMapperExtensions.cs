@@ -90,7 +90,10 @@ public static class LogixMapperExtensions
             Airduct_Right_Top_Balcony_Cam_10_Status = plcData.Airduct_Right_Top_Balcony_Cam_10_Status,
             Airduct_Right_Top_Balcony_Cam_10_Counter = plcData.Airduct_Right_Top_Balcony_Cam_10_Counter,
             Airduct_Middle_Bottom_Ridge_Cam_11_Status = plcData.Airduct_Middle_Bottom_Ridge_Cam_11_Status,
-            Airduct_Middle_Bottom_Ridge_Cam_11_Counter = plcData.Airduct_Middle_Bottom_Ridge_Cam_11_Counter
+            Airduct_Middle_Bottom_Ridge_Cam_11_Counter = plcData.Airduct_Middle_Bottom_Ridge_Cam_11_Counter,
+            Grommet_Batch_Nr = plcData.Grommet_Batch_Nr.ToString(),
+            Stonegrid_Batch_Nr = plcData.Stonegrid_Batch_Nr.ToString(),
+            Airduct_Batch_Nr = plcData.Airduct_Batch_Nr.ToString()
         };
     }
 
@@ -129,7 +132,8 @@ public static class LogixMapperExtensions
             Radiator_Right_Top_Grommet_Cam_9_Status = plcData.Radiator_Right_Top_Grommet_Cam_9_Status,
             Radiator_Right_Top_Grommet_Cam_9_Counter = plcData.Radiator_Right_Top_Grommet_Cam_9_Counter,
             Shipping_Caps_Disassembly_Status = plcData.Shipping_Caps_Disassembly_Status,
-            Shipping_Caps_Disassembly_Counter = plcData.Shipping_Caps_Disassembly_Counter
+            Shipping_Caps_Disassembly_Counter = plcData.Shipping_Caps_Disassembly_Counter,
+            Grommet_Batch_Nr = plcData.Grommet_Batch_Nr.ToString()
         };
     }
 
@@ -246,6 +250,8 @@ public static class LogixMapperExtensions
             Screw3_Program_Number = plcData.Screw[2].Program_Number,
             Screw3_Angle = plcData.Screw[2].Angle,
             Screw3_Torque = plcData.Screw[2].Torque,
+            Screw_Batch_Nr = plcData.Screw_Batch_Nr.ToString(),
+            Fan_Batch_Nr = plcData.Fan_Batch_Nr.ToString()
         };
     }
 
@@ -377,6 +383,9 @@ public static class LogixMapperExtensions
             Screw3_Program_Number = plcData.Screw[2].Program_Number,
             Screw3_Angle = plcData.Screw[2].Angle,
             Screw3_Torque = plcData.Screw[2].Torque,
+            Screw_Batch_Nr = plcData.Screw_Batch_Nr.ToString(),
+            Cap_Batch_Nr = plcData.Cap_Batch_Nr.ToString(),
+            Shraud_Batch_Nr = plcData.Shraud_Batch_Nr.ToString()
         };
     }
 

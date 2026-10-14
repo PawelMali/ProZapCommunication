@@ -47,6 +47,10 @@ public class Station7Result : StationResultMfsBase
     public float Screw3_Angle { get; set; } = 0;
     public float Screw3_Torque { get; set; } = 0;
 
+    public string Screw_Batch_Nr { get; set; } = string.Empty;
+    public string Cap_Batch_Nr { get; set; } = string.Empty;
+    public string Shraud_Batch_Nr { get; set; } = string.Empty;
+
 
     // ====================================================================
     // WŁAŚCIWOŚCI OBLICZENIOWE DLA MUDDATAGRID (Ignorowane przez Dapper)

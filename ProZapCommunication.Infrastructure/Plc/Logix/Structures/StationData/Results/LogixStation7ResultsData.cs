@@ -49,6 +49,10 @@ public class LogixStation7ResultsData
 
     public LogixScrewData[] Screw = InitializeArray<LogixScrewData>(3);
 
+    public LogixString Screw_Batch_Nr = new LogixString();
+    public LogixString Cap_Batch_Nr = new LogixString();
+    public LogixString Shraud_Batch_Nr = new LogixString();
+
 
 
     public static T[] InitializeArray<T>(Int32 length) where T : new()

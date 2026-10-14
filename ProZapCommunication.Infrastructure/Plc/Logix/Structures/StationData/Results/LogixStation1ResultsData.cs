@@ -47,4 +47,8 @@ public class LogixStation1ResultsData
     public short Airduct_Right_Top_Balcony_Cam_10_Counter = 0;
     public short Airduct_Middle_Bottom_Ridge_Cam_11_Status = 0;
     public short Airduct_Middle_Bottom_Ridge_Cam_11_Counter = 0;
+
+    public LogixString Grommet_Batch_Nr = new LogixString();
+    public LogixString Stonegrid_Batch_Nr = new LogixString();
+    public LogixString Airduct_Batch_Nr = new LogixString();
 }

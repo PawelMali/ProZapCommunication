@@ -3,13 +3,14 @@ using ProZapCommunication.Core.Models;
 using ProZapCommunication.Core.Models.StationData.Read;
 using ProZapCommunication.Core.Models.StationData.Results;
 using ProZapCommunication.Core.Models.StationData.Write;
+using System.Security.Cryptography.X509Certificates;
 
 namespace ProZapCommunication.Core.Logic.StationLogics;
 
 public class Station8Processor : StationProcessorBase
 {
     private readonly string _resultsTagName;
-    private string _visionDestPath;
+
 
 
     public Station8Processor(int stationId, IDatabaseRepository db, IPlcProvider plc, string stationIdentity, string resultsTagName)
@@ -39,6 +40,10 @@ public class Station8Processor : StationProcessorBase
 
             case PlcTaskType.ReworkCheckDiskSpace: // --- REAKCJA NA TASK 9 ---
                 return HandleCheckDiskSpace();
+
+            case PlcTaskType.ReworkCheckRadiator: // --- REAKCJA NA TASK 10 ---
+                return HandleCheckRadiator();
+
 
 
 
@@ -292,19 +297,20 @@ public class Station8Processor : StationProcessorBase
             // Zapisujemy wynik bezpośrednio do struktury WRITE – pętla 50ms natychmiast wyśle to do PLC
             CurrentWriteState.TaskStatus = finalPercent;
 
-            Log.Information("S{Id} [TASK 9]: Analyzed disk {Drive} -> Used: {Percent}% (Free: {Free} GB / Total: {Total} GB)",
+            Log.Information("S{Id} [TASK 9]: Analyzed disk {Drive} -> Used: {Percent}% (Free: {Free} GB / Total: {Total} GB), send to PLC {plc}",
                 StationId,
                 driveRoot,
-                finalPercent,
+                usedPercent,
                 Math.Round((double)freeSpace / 1024 / 1024 / 1024, 1),
-                Math.Round((double)totalSpace / 1024 / 1024 / 1024, 1));
+                Math.Round((double)totalSpace / 1024 / 1024 / 1024, 1),
+                finalPercent);
 
             // Monitorowanie alarmowe w logach C#
-            if (finalPercent >= 90)
+            if (usedPercent >= 90)
             {
                 Log.Fatal("S{Id} [TASK 9]: Disk usage exceeded 90%! Immediate action required.", StationId);
             }
-            else if (finalPercent >= 80)
+            else if (usedPercent >= 80)
             {
                 Log.Warning("S{Id} [TASK 9]: Disk usage exceeded 80%.", StationId);
             }
@@ -316,6 +322,26 @@ public class Station8Processor : StationProcessorBase
         {
             Log.Error(ex, "S{Id} [TASK 9]: Unexpected error while checking disk space.", StationId);
             CurrentWriteState.TaskStatus = (short)PlcTaskStatus.HardDriveSpaceFailed;;
+            return false;
+        }
+    }
+
+    private bool HandleCheckRadiator()
+    {
+        Log.Information("S{Id} [TASK 10]: Verifying Radiator SN code: {Dmc}", StationId, CurrentReadState.DMC);
+
+        int lastStation = 0;
+
+        try
+        {
+           // CurrentWriteState.TaskStatus = DbRepository.CheckSnCurrentStationStatus(out lastStation CurrentReadState.DMC);
+
+            return CurrentWriteState.TaskStatus is 1 or >= 3100 and <= 3799;
+        }
+        catch (System.Exception ex)
+        {
+            Log.Error(ex, "S{Id} [TASK 10]: Error.", StationId);
+            CurrentWriteState.TaskStatus = (short)PlcTaskStatus.GeneralError;
             return false;
         }
     }

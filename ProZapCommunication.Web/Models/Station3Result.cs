@@ -26,8 +26,8 @@ public class Station3Result : StationResultBase
 
     public string LeakTest_MethodText => LeakTest_Method switch
     {
-        1 => "Pressure difference",
-        2 => "Leakrate",
+        0 => "A",
+        1 => "R",
         null => "UNKNOWN",
         _ => "UNKNOWN"
     };
@@ -40,4 +40,6 @@ public class Station3Result : StationResultBase
         4 => "DISABLED",
         _ => "UNKNOWN"
     };
+
+    public double LeakTestTemperatureC => LeakTest_Temperature.HasValue ? LeakTest_Temperature.Value / 1000.0 - 273.15 : double.NaN;
 }

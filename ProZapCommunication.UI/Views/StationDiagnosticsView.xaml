@@ -114,7 +114,7 @@
             <Border Grid.Row="3" Background="{DynamicResource MaterialDesignLinearProgressBackground}" Padding="0" CornerRadius="4" Margin="0,0,0,12">
                 <StackPanel  >
                     <TextBlock Text="DMC Code sent to SQL database:" FontSize="13" FontWeight="SemiBold" Foreground="DimGray"/>
-                    <TextBlock Text="{Binding CurrentDmc, TargetNullValue='[No active query / DMC code]'}" FontSize="13" FontWeight="SemiBold" Foreground="Black" Margin="0,2,0,0"/>
+                    <TextBlock Text="{Binding CurrentDmc, TargetNullValue='[No active query / DMC code]'}" FontSize="13" FontWeight="SemiBold" Foreground="Black" Margin="0,2,0,0" TextWrapping="Wrap"/>
                 </StackPanel>
             </Border>
 

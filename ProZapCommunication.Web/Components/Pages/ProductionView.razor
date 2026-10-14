@@ -7,6 +7,7 @@
 @inject IJSRuntime JS
 @inject ISnackbar Snackbar
 
+<PageTitle>Pro-Zap - Production Overview</PageTitle>
 
 <MudText Typo="Typo.h4" Class="mb-6">Production Overview</MudText>
 
@@ -112,6 +113,10 @@ else
                         <HeaderTemplate>Cycle<br />Time (s)</HeaderTemplate>
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.Reference_Number" Title="Reference number" />
+
+                    <PropertyColumn Property="x => x.Grommet_Batch_Nr" Title="Grommet Batch" />
+                    <PropertyColumn Property="x => x.Stonegrid_Batch_Nr" Title="Stonegrid Batch" />
+                    <PropertyColumn Property="x => x.Airduct_Batch_Nr" Title="Airduct Batch" />
 
                     @*                     <PropertyColumn Property="x => x.Grommet_Left_Bottom_Presence_Cam_1Text" HeaderStyle="white-space: nowrap; text-align: center;" CellStyle="text-align: center;"> *@
                     <PropertyColumn Property="x => x.Grommet_Left_Bottom_Presence_Cam_1Text" HeaderStyle="white-space: nowrap;">
@@ -338,6 +343,8 @@ else
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.Reference_Number" Title="Reference number" />
 
+                    <PropertyColumn Property="x => x.Grommet_Batch_Nr" Title="Grommet Batch" />
+
                     <PropertyColumn Property="x => x.MFS_Left_Bottom_Balcony_Cam_1Text" HeaderStyle="white-space: nowrap;">
                         <HeaderTemplate>MFS Left <br /> Bottom Balcony <br /> CAM1 Status</HeaderTemplate>
                         <CellTemplate>
@@ -524,9 +531,9 @@ else
                         <HeaderTemplate>Leak Rate <br /> (μL/min)</HeaderTemplate>
                     </PropertyColumn>
 
-                    <PropertyColumn Property="x => x.LeakTest_Temperature" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>Temperature <br /> (mKelvin)</HeaderTemplate>
-                    </PropertyColumn>
+@*                     <PropertyColumn Property="x => x.LeakTestTemperatureC" HeaderStyle="white-space: nowrap;">
+                        <HeaderTemplate>Temperature <br /> (°C)</HeaderTemplate>
+                    </PropertyColumn> *@
 
                 </Columns>
                 <PagerContent>
@@ -578,7 +585,7 @@ else
                     </PropertyColumn>
 
                     <PropertyColumn Property="x => x.DMC_Quality_ContentText" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC Quality Content <br /> Status</HeaderTemplate>
+                        <HeaderTemplate>DMC Quality Content <br /> CAM2 Status</HeaderTemplate>
                         <CellTemplate>
                             <MudChip Color="@GetVisionStatusColor(context.Item.DMC_Quality_Content_Status)" Size="Size.Small">
                                 @context.Item.DMC_Quality_ContentText
@@ -586,11 +593,11 @@ else
                         </CellTemplate>
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.DMC_Quality_Content_Counter" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC Quality Content <br /> Counter</HeaderTemplate>
+                        <HeaderTemplate>DMC Quality Content <br /> CAM2 Counter</HeaderTemplate>
                     </PropertyColumn>
 
                     <PropertyColumn Property="x => x.DMC_Quality_GradeText" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC Quality Grade <br /> Status</HeaderTemplate>
+                        <HeaderTemplate>DMC Quality Grade <br /> CAM2 Status</HeaderTemplate>
                         <CellTemplate>
                             <MudChip Color="@GetVisionStatusColor(context.Item.DMC_Quality_Grade_Status)" Size="Size.Small">
                                 @context.Item.DMC_Quality_GradeText
@@ -598,15 +605,15 @@ else
                         </CellTemplate>
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.DMC_Quality_Grade_Counter" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC Quality Grade <br /> Counter</HeaderTemplate>
+                        <HeaderTemplate>DMC Quality Grade <br /> CAM2 Counter</HeaderTemplate>
                     </PropertyColumn>
 
                     <PropertyColumn Property="x => x.DMC_Quality_Grade_Result" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC Quality Grade <br /> Result</HeaderTemplate>
+                        <HeaderTemplate>DMC Quality Grade <br /> CAM2 Result</HeaderTemplate>
                     </PropertyColumn>
 
                     <PropertyColumn Property="x => x.DMC_OCR_Homologation_Part_NumberText" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC OCR <br /> Homologation <br /> Part Number Status</HeaderTemplate>
+                        <HeaderTemplate>DMC OCR <br /> Homologation <br /> Part Number CAM1 Status</HeaderTemplate>
                         <CellTemplate>
                             <MudChip Color="@GetVisionStatusColor(context.Item.DMC_OCR_Homologation_Part_Number_Status)" Size="Size.Small">
                                 @context.Item.DMC_OCR_Homologation_Part_NumberText
@@ -614,11 +621,11 @@ else
                         </CellTemplate>
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.DMC_OCR_Homologation_Part_Number_Counter" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC OCR <br /> Homologation <br /> Part Number Counter</HeaderTemplate>
+                        <HeaderTemplate>DMC OCR <br /> Homologation <br /> Part Number CAM1 Counter</HeaderTemplate>
                     </PropertyColumn>
 
                     <PropertyColumn Property="x => x.DMC_OCR_SupplierText" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC OCR <br /> Supplier <br /> Status</HeaderTemplate>
+                        <HeaderTemplate>DMC OCR <br /> Supplier <br /> CAM1 Status</HeaderTemplate>
                         <CellTemplate>
                             <MudChip Color="@GetVisionStatusColor(context.Item.DMC_OCR_Supplier_Status)" Size="Size.Small">
                                 @context.Item.DMC_OCR_SupplierText
@@ -626,11 +633,11 @@ else
                         </CellTemplate>
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.DMC_OCR_Supplier_Counter" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC OCR <br /> Supplier <br /> Counter</HeaderTemplate>
+                        <HeaderTemplate>DMC OCR <br /> Supplier <br /> CAM1 Counter</HeaderTemplate>
                     </PropertyColumn>
 
                     <PropertyColumn Property="x => x.DMC_OCR_Country_Of_OriginText" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC OCR <br /> Country Of Origin <br /> Status</HeaderTemplate>
+                        <HeaderTemplate>DMC OCR <br /> Country Of Origin <br /> CAM1 Status</HeaderTemplate>
                         <CellTemplate>
                             <MudChip Color="@GetVisionStatusColor(context.Item.DMC_OCR_Country_Of_Origin_Status)" Size="Size.Small">
                                 @context.Item.DMC_OCR_Country_Of_OriginText
@@ -638,7 +645,7 @@ else
                         </CellTemplate>
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.DMC_OCR_Country_Of_Origin_Counter" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC OCR  <br /> Country Of Origin <br /> Counter</HeaderTemplate>
+                        <HeaderTemplate>DMC OCR  <br /> Country Of Origin <br /> CAM1 Counter</HeaderTemplate>
                     </PropertyColumn>
 
                 </Columns>
@@ -672,23 +679,26 @@ else
                         <HeaderTemplate>Cycle<br />Time (s)</HeaderTemplate>
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.Reference_Number" Title="Reference number" />
+
+                    <PropertyColumn Property="x => x.Screw_Batch_Nr" Title="Screw Batch" />
+                    <PropertyColumn Property="x => x.Fan_Batch_Nr" Title="Fan Batch" />
                     
-                    <PropertyColumn Property="x => x.MotorInspectionStatusText" Title="Motor Inspection Status">
+                    <PropertyColumn Property="x => x.MotorInspectionStatusText" Title="Motor Orientation CAM1 Status">
                         <CellTemplate>
                             <MudChip Color="@GetVisionStatusColor(context.Item.Motor_Inspection_Status)" Size="Size.Small">
                                 @context.Item.MotorInspectionStatusText
                             </MudChip>
                         </CellTemplate>
                     </PropertyColumn>
-                    <PropertyColumn Property="x => x.Motor_Inspection_Counter" Title="Motor Inspection Counter" />
-                    <PropertyColumn Property="x => x.FanInspectionStatusText" Title="Fan Inspection Status">
+                    <PropertyColumn Property="x => x.Motor_Inspection_Counter" Title="Motor Orientation CAM1 Counter" />
+                    <PropertyColumn Property="x => x.FanInspectionStatusText" Title="Fan Orientation CAM1 Status">
                         <CellTemplate>
                             <MudChip Color="@GetVisionStatusColor(context.Item.Fan_Inspection_Status)" Size="Size.Small">
                                 @context.Item.FanInspectionStatusText
                             </MudChip>
                         </CellTemplate>
                     </PropertyColumn>
-                    <PropertyColumn Property="x => x.Fan_Inspection_Counter" Title="Fan Inspection Counter" />
+                    <PropertyColumn Property="x => x.Fan_Inspection_Counter" Title="Fan Orientation CAM1 Counter" />
 
                     <PropertyColumn Property="x => x.Screw1StatusText" HeaderStyle="white-space: nowrap;">
                         <HeaderTemplate>Screw 1<br />Status</HeaderTemplate>
@@ -719,7 +729,7 @@ else
                             Screw 1<br />Torque
                         </HeaderTemplate>
                         <CellTemplate>
-                            @($"{context.Item.Screw1_Torque} Nm")
+                            @($"{context.Item.Screw1_Torque:F2} Nm")
                         </CellTemplate>
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.Screw1_Angle" HeaderStyle="white-space: nowrap;">
@@ -727,7 +737,7 @@ else
                             Screw 1<br />Angle
                         </HeaderTemplate>
                         <CellTemplate>
-                            @($"{context.Item.Screw1_Angle} °")
+                            @($"{context.Item.Screw1_Angle:F2} °")
                         </CellTemplate>
                     </PropertyColumn>
 
@@ -760,7 +770,7 @@ else
                             Screw 2<br />Torque
                         </HeaderTemplate>
                         <CellTemplate>
-                            @($"{context.Item.Screw2_Torque} Nm")
+                            @($"{context.Item.Screw2_Torque:F2} Nm")
                         </CellTemplate>
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.Screw2_Angle" HeaderStyle="white-space: nowrap;">
@@ -768,7 +778,7 @@ else
                             Screw 2<br />Angle
                         </HeaderTemplate>
                         <CellTemplate>
-                            @($"{context.Item.Screw2_Angle} °")
+                            @($"{context.Item.Screw2_Angle:F2} °")
                         </CellTemplate>
                     </PropertyColumn>
 
@@ -801,7 +811,7 @@ else
                             Screw 3<br />Torque
                         </HeaderTemplate>
                         <CellTemplate>
-                            @($"{context.Item.Screw3_Torque} Nm")
+                            @($"{context.Item.Screw3_Torque:F2} Nm")
                         </CellTemplate>
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.Screw3_Angle" HeaderStyle="white-space: nowrap;">
@@ -809,7 +819,7 @@ else
                             Screw 3<br />Angle
                         </HeaderTemplate>
                         <CellTemplate>
-                            @($"{context.Item.Screw3_Angle} °")
+                            @($"{context.Item.Screw3_Angle:F2} °")
                         </CellTemplate>
                     </PropertyColumn>
                 </Columns>
@@ -842,7 +852,8 @@ else
                     <PropertyColumn Property="x => x.CycleTime" HeaderStyle="white-space: nowrap;">
                         <HeaderTemplate>Cycle<br />Time (s)</HeaderTemplate>
                     </PropertyColumn>
-                    <PropertyColumn Property="x => x.Final_static_unbalance" Format="N2" Title="Initial static unbalance" />
+                    <PropertyColumn Property="x => x.Reference_Number" Title="Reference number" />
+                    <PropertyColumn Property="x => x.Initial_static_unbalance" Format="N2" Title="Initial static unbalance" />
                     <PropertyColumn Property="x => x.Final_static_unbalance" Format="N2" Title="Final static unbalance" />
                     <PropertyColumn Property="x => x.Runout" Format="N2" Title="Runout" />
                     <PropertyColumn Property="x => x.Initial_moment_unbalance" Format="N2" Title="Initial moment unbalance" />
@@ -886,45 +897,49 @@ else
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.Reference_Number" Title="Reference number" />
 
-                    <PropertyColumn Property="x => x.ShraudStatusText" Title="Shraud Inspection Status">
+                    <PropertyColumn Property="x => x.Screw_Batch_Nr" Title="Screw Batch" />
+                    <PropertyColumn Property="x => x.Cap_Batch_Nr" Title="Cap Batch" />
+                    <PropertyColumn Property="x => x.Shraud_Batch_Nr" Title="Shraud Batch" />
+
+                    <PropertyColumn Property="x => x.ShraudStatusText" Title="Shraud Type CAM1 Status">
                         <CellTemplate>
                             <MudChip Color="@GetVisionStatusColor(context.Item.Shraud_Status)" Size="Size.Small">
                                 @context.Item.ShraudStatusText
                             </MudChip>
                         </CellTemplate>
                     </PropertyColumn>
-                    <PropertyColumn Property="x => x.Shraud_Counter" Title="Shraud Inspection Counter" />
-                    <PropertyColumn Property="x => x.CableStatusText" Title="Cable Inspection Status">
+                    <PropertyColumn Property="x => x.Shraud_Counter" Title="Shraud Type CAM1 Counter" />
+                    <PropertyColumn Property="x => x.CableStatusText" Title="Cable Inspection CAM1 Status">
                         <CellTemplate>
                             <MudChip Color="@GetVisionStatusColor(context.Item.Cable_Status)" Size="Size.Small">
                                 @context.Item.CableStatusText
                             </MudChip>
                         </CellTemplate>
                     </PropertyColumn>
-                    <PropertyColumn Property="x => x.Cable_Counter" Title="Cable Inspection Counter" />
-                    <PropertyColumn Property="x => x.PlugStatusText" Title="Plug Inspection Status">
+                    <PropertyColumn Property="x => x.Cable_Counter" Title="Cable Inspection CAM1 Counter" />
+                    <PropertyColumn Property="x => x.PlugStatusText" Title="Plug Inspection CAM2 Status">
                         <CellTemplate>
                             <MudChip Color="@GetVisionStatusColor(context.Item.Plug_Status)" Size="Size.Small">
                                 @context.Item.PlugStatusText
                             </MudChip>
                         </CellTemplate>
                     </PropertyColumn>
-                    <PropertyColumn Property="x => x.Plug_Counter" Title="Plug Inspection Counter" />
-                    <PropertyColumn Property="x => x.ShippingCapStatusText" Title="Shipping Cap Inspection Status">
+                    <PropertyColumn Property="x => x.Plug_Counter" Title="Plug Inspection CAM2 Counter" />
+                    <PropertyColumn Property="x => x.ShippingCapStatusText" Title="Shipping Cap Inspection CAM1 Status">
                         <CellTemplate>
                             <MudChip Color="@GetVisionStatusColor(context.Item.Shipping_Cap_Status)" Size="Size.Small">
                                 @context.Item.ShippingCapStatusText
                             </MudChip>
                         </CellTemplate>
                     </PropertyColumn>
-                    <PropertyColumn Property="x => x.Shipping_Cap_Counter" Title="Shipping Cap Inspection Counter" />
+                    <PropertyColumn Property="x => x.Shipping_Cap_Counter" Title="Shipping Cap Inspection CAM1 Counter" />
 
                     <PropertyColumn Property="x => x.Print_Counter" HeaderStyle="white-space: nowrap;">
                         <HeaderTemplate>Print Counter</HeaderTemplate>
                     </PropertyColumn>
 
                     <PropertyColumn Property="x => x.DMC_Quality_ContentText" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC Quality Content <br /> Status</HeaderTemplate>
+                        <HeaderTemplate>DMC Quality Content <br /> CAM4 Status</HeaderTemplate>
                         <CellTemplate>
                             <MudChip Color="@GetVisionStatusColor(context.Item.DMC_Quality_Content_Status)" Size="Size.Small">
                                 @context.Item.DMC_Quality_ContentText
@@ -932,11 +947,11 @@ else
                         </CellTemplate>
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.DMC_Quality_Content_Counter" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC Quality Content <br /> Counter</HeaderTemplate>
+                        <HeaderTemplate>DMC Quality Content <br /> CAM4 Counter</HeaderTemplate>
                     </PropertyColumn>
 
                     <PropertyColumn Property="x => x.DMC_Quality_GradeText" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC Quality Grade <br /> Status</HeaderTemplate>
+                        <HeaderTemplate>DMC Quality Grade <br /> CAM4 Status</HeaderTemplate>
                         <CellTemplate>
                             <MudChip Color="@GetVisionStatusColor(context.Item.DMC_Quality_Grade_Status)" Size="Size.Small">
                                 @context.Item.DMC_Quality_GradeText
@@ -944,15 +959,15 @@ else
                         </CellTemplate>
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.DMC_Quality_Grade_Counter" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC Quality Grade <br /> Counter</HeaderTemplate>
+                        <HeaderTemplate>DMC Quality Grade <br /> CAM4 Counter</HeaderTemplate>
                     </PropertyColumn>
 
                     <PropertyColumn Property="x => x.DMC_Quality_Grade_Result" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC Quality Grade <br /> Result</HeaderTemplate>
+                        <HeaderTemplate>DMC Quality Grade <br /> CAM4 Result</HeaderTemplate>
                     </PropertyColumn>
 
                     <PropertyColumn Property="x => x.DMC_OCR_Homologation_Part_NumberText" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC OCR <br /> Homologation <br /> Part Number Status</HeaderTemplate>
+                        <HeaderTemplate>DMC OCR <br /> Homologation <br /> Part Number CAM3 Status</HeaderTemplate>
                         <CellTemplate>
                             <MudChip Color="@GetVisionStatusColor(context.Item.DMC_OCR_Homologation_Part_Number_Status)" Size="Size.Small">
                                 @context.Item.DMC_OCR_Homologation_Part_NumberText
@@ -960,11 +975,11 @@ else
                         </CellTemplate>
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.DMC_OCR_Homologation_Part_Number_Counter" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC OCR <br /> Homologation <br /> Part Number Counter</HeaderTemplate>
+                        <HeaderTemplate>DMC OCR <br /> Homologation <br /> Part Number CAM3 Counter</HeaderTemplate>
                     </PropertyColumn>
 
                     <PropertyColumn Property="x => x.DMC_OCR_SupplierText" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC OCR <br /> Supplier <br /> Status</HeaderTemplate>
+                        <HeaderTemplate>DMC OCR <br /> Supplier <br /> CAM3 Status</HeaderTemplate>
                         <CellTemplate>
                             <MudChip Color="@GetVisionStatusColor(context.Item.DMC_OCR_Supplier_Status)" Size="Size.Small">
                                 @context.Item.DMC_OCR_SupplierText
@@ -972,11 +987,11 @@ else
                         </CellTemplate>
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.DMC_OCR_Supplier_Counter" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC OCR <br /> Supplier <br /> Counter</HeaderTemplate>
+                        <HeaderTemplate>DMC OCR <br /> Supplier <br /> CAM3 Counter</HeaderTemplate>
                     </PropertyColumn>
 
                     <PropertyColumn Property="x => x.DMC_OCR_Country_Of_OriginText" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC OCR <br /> Country Of Origin <br /> Status</HeaderTemplate>
+                        <HeaderTemplate>DMC OCR <br /> Country Of Origin <br /> CAM3 Status</HeaderTemplate>
                         <CellTemplate>
                             <MudChip Color="@GetVisionStatusColor(context.Item.DMC_OCR_Country_Of_Origin_Status)" Size="Size.Small">
                                 @context.Item.DMC_OCR_Country_Of_OriginText
@@ -984,7 +999,7 @@ else
                         </CellTemplate>
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.DMC_OCR_Country_Of_Origin_Counter" HeaderStyle="white-space: nowrap;">
-                        <HeaderTemplate>DMC OCR  <br /> Country Of Origin <br /> Counter</HeaderTemplate>
+                        <HeaderTemplate>DMC OCR  <br /> Country Of Origin <br /> CAM3 Counter</HeaderTemplate>
                     </PropertyColumn>
 
                     <PropertyColumn Property="x => x.Screw1StatusText" HeaderStyle="white-space: nowrap;">
