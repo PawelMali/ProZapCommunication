@@ -412,13 +412,35 @@ public static class LogixMapperExtensions
         };
     }
 
+    public static LogixStationWriteBase ToPlcStructure(this Station8WriteBaseModel coreModel)
+    {
+        if (coreModel == null) return null;
+
+        return new LogixStationWriteBase
+        {
+            Life = (short)coreModel.Life,
+            Task_Counter = (ushort)coreModel.TaskCounter,
+            // Tutaj mapujemy parametry sterujące wysyłane z PC:
+            Task_Recived_From_PC = (short)coreModel.TaskSendToPLC,
+            Task_Confirm_From_PC = (short)coreModel.TaskConfirmToPLC,
+            Task_Succes_Counter = (ushort)coreModel.TaskSuccessCounter,
+            Task_Status = (short)coreModel.TaskStatus,
+            Camera_Found = coreModel.CameraFound,
+            Camera_Moved = coreModel.CameraMoved,
+            AdditionalInt1 = (short)coreModel.LastStation
+
+
+            // Rezerwy pozostają domyślnie 0
+        };
+    }
+
     public static Station8ResultsData ToCoreModel(this LogixStation8ResultsData plcData)
     {
         if (plcData == null) return null;
 
         return new Station8ResultsData
         {
-            Reserve1_SN = plcData.Reserve1_Sn.ToString(),
+            Operator_ID = plcData.Operator_ID.ToString(),
             Reserve1_Status = plcData.Reserve1_Status,
             Reserve2_SN = plcData.Reserve2_Sn.ToString(),
             Reserve2_Status = plcData.Reserve2_Status,

@@ -467,7 +467,9 @@ public class Bootstrapper
                 processor.UpdateHandshakeData(freshRead);
 
                 // Natychmiastowe odesłanie struktury WRITE (W tym echa sygnału Life)
-                plc.WriteBase(tagHandshakeWrite, processor.GetWriteState());
+                plc.WriteStation8Base(tagHandshakeWrite, (Station8WriteBaseModel)processor.GetWriteState());
+
+                processor.WriteBaseMenagment();
             }
         }));
 

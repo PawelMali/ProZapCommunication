@@ -20,7 +20,7 @@
             <MudDatePicker @bind-Date="dateTo" Label="To Date" Editable="true" Variant="Variant.Outlined" />
         </MudItem>
         <MudItem xs="12" sm="3" md="2">
-            <MudSelect @bind-Value="selectedStationId" Label="Stanowisko" Variant="Variant.Outlined">
+            <MudSelect @bind-Value="selectedStationId" Label="Stanowisko" Variant="Variant.Outlined" MaxHeight="400">
                 <MudSelectItem Value="1">CRFM 1</MudSelectItem>
                 <MudSelectItem Value="2">CRFM 2</MudSelectItem>
                 <MudSelectItem Value="3">CRFM 3</MudSelectItem>
@@ -1144,6 +1144,7 @@ else
 
                 <Columns>
                     <PropertyColumn Property="x => x.Timestamp" Title="Timestamp" Format="yyyy-MM-dd HH:mm:ss" />
+                    <PropertyColumn Property="x => x.Operator_ID" Title="Operator" />
                     <PropertyColumn Property="x => x.SN" Title="SN/Motor" />
                     <PropertyColumn Property="x => x.SNStatusText" Title="SN/Motor Status">
                         <CellTemplate>
@@ -1182,6 +1183,8 @@ else
             break;
     }
 }
+
+
 
 
 @code {

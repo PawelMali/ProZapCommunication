@@ -721,6 +721,7 @@
                     <MudTable Items="@report.Station8History" Dense="true" Hover="true" Class="mb-6" Elevation="1" Style="width: auto; max-width: max-content;">
                         <HeaderContent>
                             <MudTh Class="text-center">Timestamp</MudTh>
+                            <MudTh Class="text-center">Operator</MudTh>
                             <MudTh Class="text-center">SN/Motor Status</MudTh>
                             <MudTh Class="text-center">SN/Motor </MudTh>
                             <MudTh Class="text-center">Radiator Status</MudTh>
@@ -733,6 +734,7 @@
                         </HeaderContent>
                         <RowTemplate>
                             <MudTd DataLabel="Timestamp" Class="text-center">@context.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</MudTd>
+                            <MudTd DataLabel="Operator" Class="text-center">@context.Operator_ID</MudTd>
                             <MudTd DataLabel="SN/Motor Status" Class="text-center">
                                 <MudChip T="string" Color="@GetMainStatusColor(context.SN_Status)" Size="Size.Small">
                                     @GetMainStatusText(context.SN_Status) | @context.SN_Status

@@ -20,6 +20,12 @@ public class SqlRepository : IDatabaseRepository
         _maxReworkAllowed = maxReworkAllowed;
     }
 
+    private class SnCheckResult
+    {
+        public int SN_Status { get; set; }
+        public DateTime Timestamp { get; set; }
+        public int StationNo { get; set; }
+    }
 
     public int SaveProductionStation1Data(string stationIdentity, int stationId, Station1ResultsData data)
     {
@@ -1726,7 +1732,7 @@ public class SqlRepository : IDatabaseRepository
     }
 
 
-    public int ProcessRadiatorRework(string radiatorSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity)
+    public int ProcessRadiatorRework(string radiatorSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity, Station8ResultsData data)
     {
         var stationLog = Log.ForContext("StationIdentity", stationIdentity.Replace(".", "_"));
 
@@ -1741,13 +1747,13 @@ public class SqlRepository : IDatabaseRepository
         const string sqlUpdateProduction = @"
                 UPDATE Station1Results 
                 SET Radiator_Status = @ReworkStatus, 
-                    SN_Status = @ReworkCode 
+                    SN_Status = @ReworkStatus 
                 WHERE Id = @LogId;";
 
         // 3. Zapytanie wstawiające rekord do tabeli reworku
         const string sqlInsertRework = @"
-                INSERT INTO Station8Results (StationId, Timestamp, SN, SN_Status, Radiator_SN, Radiator_Status, Mfs_SN, mfs_Status, ReworkCode)
-                VALUES (@StationId, @Timestamp, @SN, @SN_Status, @Radiator_SN, @Radiator_Status, @Mfs_SN, @mfs_Status, @ReworkCode);";
+                INSERT INTO Station8Results (StationId, Timestamp, SN, SN_Status, Radiator_SN, Radiator_Status, Mfs_SN, mfs_Status, ReworkCode, Operator_ID)
+                VALUES (@StationId, @Timestamp, @SN, @SN_Status, @Radiator_SN, @Radiator_Status, @Mfs_SN, @mfs_Status, @ReworkCode, @Operator_ID);";
 
         try
         {
@@ -1791,7 +1797,8 @@ public class SqlRepository : IDatabaseRepository
                         Radiator_Status = reworkCode,
                         Mfs_SN = string.Empty,
                         mfs_Status = 0,
-                        ReworkCode = reworkCode
+                        ReworkCode = reworkCode,
+                        Operator_ID = data.Operator_ID
                     }, transaction);
 
                     // Zatwierdzamy transakcję w bazie danych
@@ -1808,7 +1815,7 @@ public class SqlRepository : IDatabaseRepository
         }
     }
 
-    public int ProcessMotorRework(string motorSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity)
+    public int ProcessMotorRework(string motorSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity, Station8ResultsData data)
     {
         var stationLog = Log.ForContext("StationIdentity", stationIdentity.Replace(".", "_"));
 
@@ -1834,7 +1841,7 @@ public class SqlRepository : IDatabaseRepository
                     bool updateSt7 = false;
 
                     // ANALIZA STATUSU REWORKU
-                    if (reworkCode == 2 || reworkCode == 4 || (reworkCode >= 3500 && reworkCode <= 3599))
+                    if (reworkCode == 1 || reworkCode == 2 || reworkCode == 4 || (reworkCode >= 3500 && reworkCode <= 3599))
                     {
                         updateSt5 = true;
                         updateSt6 = true;
@@ -1887,8 +1894,8 @@ public class SqlRepository : IDatabaseRepository
 
                     // KROK OSTATNI: Wstawienie wpisu do tabeli historycznej Station8Results
                     const string sqlInsertRework = @"
-                            INSERT INTO Station8Results (StationId, Timestamp, SN, SN_Status, Radiator_SN, Radiator_Status, Mfs_SN, mfs_Status, ReworkCode)
-                            VALUES (@StationId, @Timestamp, @SN, @SN_Status, @Radiator_SN, @Radiator_Status, @Mfs_SN, @mfs_Status, @ReworkCode);";
+                            INSERT INTO Station8Results (StationId, Timestamp, SN, SN_Status, Radiator_SN, Radiator_Status, Mfs_SN, mfs_Status, Motor_SN, Motor_Status, ReworkCode, Operator_ID)
+                            VALUES (@StationId, @Timestamp, @SN, @SN_Status, @Radiator_SN, @Radiator_Status, @Mfs_SN, @mfs_Status, @Motor_SN, @Motor_Status, @ReworkCode, @Operator_ID);";
 
                     connection.Execute(sqlInsertRework, new
                     {
@@ -1902,7 +1909,8 @@ public class SqlRepository : IDatabaseRepository
                         Mfs_Status = 0,
                         Motor_SN = motorSn, // W tym przypadku głównym SN jest silnik
                         Motor_Status = reworkCode,
-                        ReworkCode = reworkCode
+                        ReworkCode = reworkCode,
+                        Operator_ID = data.Operator_ID
                     }, transaction);
 
                     // Zatwierdzamy całą transakcję
@@ -1919,11 +1927,14 @@ public class SqlRepository : IDatabaseRepository
         }
     }
 
-    public int ProcessMfsRework(string mfsSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity)
+    public int ProcessMfsRework(string mfsSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity, Station8ResultsData data)
     {
         var stationLog = Log.ForContext("StationIdentity", stationIdentity.Replace(".", "_"));
+        var SN = "";
+        var Motor_SN = "";
 
         var latestRecord = default(dynamic);
+        var latestRecord2 = default(dynamic);
 
         try
         {
@@ -1940,7 +1951,7 @@ public class SqlRepository : IDatabaseRepository
                     }
 
                     // Warunek biznesowy: 2, 4 lub zakres od 3200 do 3299
-                    if (reworkCode == 2 || reworkCode == 4 || (reworkCode >= 3200 && reworkCode <= 3299))
+                    if (reworkCode == 1 || reworkCode == 2 || reworkCode == 4 || (reworkCode >= 3200 && reworkCode <= 3299))
                     {
                         const string sqlFindLatest = @"
                                 SELECT TOP 1 Id, SN  
@@ -1954,17 +1965,50 @@ public class SqlRepository : IDatabaseRepository
                                     SN_Status = @Status    
                                 WHERE Id = @Id;";
 
+                        const string sqlFindLatest2 = @"
+                                SELECT TOP 1 Id, Motor_SN  
+                                FROM Station7Results 
+                                WHERE Mfs_SN = @MfsSn 
+                                ORDER BY Timestamp DESC;";
+
+                        const string sqlUpdate2 = @"
+                                UPDATE Station7Results 
+                                SET Mfs_Status = @Status,
+                                    Motor_Status = @Status    
+                                WHERE Id = @Id;";
+
                         latestRecord = connection.QueryFirstOrDefault(sqlFindLatest, new { MfsSn = mfsSn }, transaction);
 
                         if (latestRecord == null)
                         {
                             stationLog.Warning("S{Id} [SQL]: Not found Mfs_SN: {Sn} on Station 2. Rework not possible", currentStationId, mfsSn);
-                            return (int)PlcTaskStatus.SQLEmptyResultsData;
                         }
                         else
                         {
                             connection.Execute(sqlUpdate, new { Status = reworkCode, Id = latestRecord.Id }, transaction);
                             stationLog.Information("S{Id} [SQL]: Updated log ID {LogId} with status {Status}.", stationIdentity, latestRecord.Id, reworkCode);
+                            SN = latestRecord.SN;
+                        }
+
+                        if (reworkCode == 1 || reworkCode == 2 || reworkCode == 4)
+                        {
+                            latestRecord2 = connection.QueryFirstOrDefault(sqlFindLatest2, new { MfsSn = mfsSn }, transaction);
+
+                            if (latestRecord2 == null)
+                            {
+                                stationLog.Warning("S{Id} [SQL]: Not found Mfs_SN: {Sn} on Station 7. Rework not possible", currentStationId, mfsSn);
+                            }
+                            else
+                            {
+                                connection.Execute(sqlUpdate2, new { Status = reworkCode, Id = latestRecord2.Id }, transaction);
+                                stationLog.Information("S{Id} [SQL]: Updated log ID {LogId} with status {Status}.", stationIdentity, latestRecord2.Id, reworkCode);
+                                Motor_SN = latestRecord2.Motor_SN;
+                            }
+                        }
+
+                        if (latestRecord == null && latestRecord2 == null)
+                        {
+                            return (int)PlcTaskStatus.SQLEmptyResultsData;
                         }
                     }
                     else
@@ -1975,20 +2019,23 @@ public class SqlRepository : IDatabaseRepository
 
                     // KROK OSTATNI: Wstawienie wpisu do tabeli historycznej Station8Results
                     const string sqlInsertRework = @"
-                            INSERT INTO Station8Results (StationId, Timestamp, SN, SN_Status, Radiator_SN, Radiator_Status, Mfs_SN, mfs_Status, ReworkCode)
-                            VALUES (@StationId, @Timestamp, @SN, @SN_Status, @Radiator_SN, @Radiator_Status, @Mfs_SN, @mfs_Status, @ReworkCode);";
+                            INSERT INTO Station8Results (StationId, Timestamp, SN, SN_Status, Radiator_SN, Radiator_Status, Mfs_SN, mfs_Status, Motor_SN, Motor_Status, ReworkCode, Operator_ID)
+                            VALUES (@StationId, @Timestamp, @SN, @SN_Status, @Radiator_SN, @Radiator_Status, @Mfs_SN, @mfs_Status, @Motor_SN, @Motor_Status, @ReworkCode, @Operator_ID);";
 
                     connection.Execute(sqlInsertRework, new
                     {
                         StationId = currentStationId,
                         Timestamp = DateTime.Now,
-                        SN = latestRecord.SN,
+                        SN = SN,
                         SN_Status = reworkCode,
                         Radiator_SN = string.Empty,
                         Radiator_Status = 0,
                         Mfs_SN = mfsSn,
                         mfs_Status = reworkCode,
-                        ReworkCode = reworkCode
+                        Motor_SN = Motor_SN,
+                        Motor_Status = reworkCode,
+                        ReworkCode = reworkCode,
+                        Operator_ID = data.Operator_ID
                     }, transaction);
 
                     transaction.Commit();
@@ -2004,7 +2051,7 @@ public class SqlRepository : IDatabaseRepository
         }
     }
 
-    public int ProcessMainSnRework(string mainSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity)
+    public int ProcessMainSnRework(string mainSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity, Station8ResultsData data)
     {
         var stationLog = Log.ForContext("StationIdentity", stationIdentity.Replace(".", "_"));
 
@@ -2092,8 +2139,8 @@ public class SqlRepository : IDatabaseRepository
 
                     // KROK OSTATNI: Zapis historyczny do tabeli Station8Results
                     const string sqlInsertRework = @"
-                            INSERT INTO Station8Results (StationId, Timestamp, SN, SN_Status, Radiator_SN, Radiator_Status, Mfs_SN, mfs_Status, ReworkCode)
-                            VALUES (@StationId, @Timestamp, @SN, @SN_Status, @Radiator_SN, @Radiator_Status, @Mfs_SN, @mfs_Status, @ReworkCode);";
+                            INSERT INTO Station8Results (StationId, Timestamp, SN, SN_Status, Radiator_SN, Radiator_Status, Mfs_SN, mfs_Status, ReworkCode, Operator_ID)
+                            VALUES (@StationId, @Timestamp, @SN, @SN_Status, @Radiator_SN, @Radiator_Status, @Mfs_SN, @mfs_Status, @ReworkCode, @Operator_ID);";
 
                     connection.Execute(sqlInsertRework, new
                     {
@@ -2105,7 +2152,8 @@ public class SqlRepository : IDatabaseRepository
                         Radiator_Status = 0,
                         Mfs_SN = string.Empty,
                         mfs_Status = 0,
-                        ReworkCode = reworkCode
+                        ReworkCode = reworkCode,
+                        Operator_ID = data.Operator_ID
                     }, transaction);
 
                     transaction.Commit();
@@ -2198,5 +2246,228 @@ public class SqlRepository : IDatabaseRepository
         return currentReworkCount >= _maxReworkAllowed;
     }
 
-}
 
+    public int CheckRadiatorSnRework(string stationIdentity, int stationId, string sn, out int lastStation)
+    {
+        lastStation = 0;
+        var stationLog = Log.ForContext("PlcIdentity", stationIdentity);
+
+        if (string.IsNullOrWhiteSpace(sn))
+        {
+            stationLog.Warning("S{Id} [SQL]: Missing SN to check", stationId);
+            return (int)PlcTaskStatus.SQLEmptyResultsDMC;
+        }
+
+        string tableName = $"Station1Results";
+
+        string sql = $@"
+        SELECT TOP 1 SN_Status
+        FROM {tableName}
+        WHERE Radiator_SN = @Radiator_SN
+        ORDER BY Timestamp DESC;";
+
+        try
+        {
+            using (IDbConnection connection = new SqlConnection(_connectionString))
+            {
+                var status = connection.QueryFirstOrDefault<int?>(sql, new { Radiator_SN = sn });
+
+                // Brak wpisu -> SUCCESS
+                if (status == null)
+                {
+                    stationLog.Debug("S{Id} [SQL]: no entry for SN {SN}",
+                        stationId, sn);
+                    return (int)PlcTaskStatus.PreviousPartNotFound;
+                }
+
+                stationLog.Debug("S{Id} [SQL]: SN {SN} already processed -> {Status}", stationId, sn, status);
+                lastStation = 1;
+                return (int)status;
+            }
+        }
+        catch (SqlException ex)
+        {
+            stationLog.Error(ex, "S{Id} [SQL]: SQL error when checking SN", stationId);
+            return (int)PlcTaskStatus.SQLExecutionError;
+        }
+        catch (InvalidOperationException ex)
+        {
+            stationLog.Error(ex, "S{Id} [SQL]: connection error with DB", stationId);
+            return (int)PlcTaskStatus.SQLConnectionError;
+        }
+        catch (Exception ex)
+        {
+            stationLog.Error(ex, "S{Id} [SQL]: unknown error when checking SN", stationId);
+            return (int)PlcTaskStatus.SQLUnknownError;
+        }
+    }
+
+    public int CheckMfsSnRework(string stationIdentity, int stationId, string sn, out int lastStation)
+    {
+        lastStation = 0;
+
+        var stationLog = Log.ForContext("PlcIdentity", stationIdentity);
+
+        if (string.IsNullOrWhiteSpace(sn))
+        {
+            stationLog.Warning("S{Id} [SQL]: Missing SN to check", stationId);
+            return (int)PlcTaskStatus.SQLEmptyResultsDMC;
+        }
+
+        string sql2 = @"SELECT TOP 1
+                      SN_Status,
+                      [Timestamp]
+                  FROM Station2Results
+                  WHERE Mfs_SN = @Mfs_SN
+                  ORDER BY [Timestamp] DESC";
+
+        string sql7 = @"SELECT TOP 1
+                      Motor_Status as SN_Status,
+                      [Timestamp]
+                  FROM Station7Results
+                  WHERE Mfs_SN = @Mfs_SN
+                  ORDER BY [Timestamp] DESC";
+
+        try
+        {
+            using (IDbConnection connection = new SqlConnection(_connectionString))
+            {
+                var station2 = connection.QueryFirstOrDefault<SnCheckResult>(sql2, new { Mfs_SN = sn });
+
+                var station7 = connection.QueryFirstOrDefault<SnCheckResult>(sql7, new { Mfs_SN = sn });
+
+                // Brak wpisów w obu tabelach
+                if (station2 == null && station7 == null)
+                {
+                    stationLog.Debug("S{Id} [SQL]: no entry for SN {SN}", stationId, sn);
+
+                    return (int)PlcTaskStatus.PreviousPartNotFound;
+                }
+
+                SnCheckResult result;
+
+                if (station2 != null &&  (station7 == null || station2.Timestamp >= station7.Timestamp))
+                {
+                    result = station2;
+                    lastStation = 2;
+                }
+                else
+                {
+                    result = station7!;
+                    lastStation = 7;
+                }
+
+                stationLog.Debug("S{Id} [SQL]: SN {SN} found on station {LastStation} -> {Status}",stationId, sn, lastStation, result.SN_Status);
+                return result.SN_Status;
+            }
+        }
+        catch (SqlException ex)
+        {
+            stationLog.Error(ex, "S{Id} [SQL]: SQL error when checking SN", stationId);
+            return (int)PlcTaskStatus.SQLExecutionError;
+        }
+        catch (InvalidOperationException ex)
+        {
+            stationLog.Error(ex, "S{Id} [SQL]: connection error with DB", stationId);
+            return (int)PlcTaskStatus.SQLConnectionError;
+        }
+        catch (Exception ex)
+        {
+            stationLog.Error(ex, "S{Id} [SQL]: unknown error when checking SN", stationId);
+            return (int)PlcTaskStatus.SQLUnknownError;
+        }
+    }
+
+    public int CheckMotorSnRework(string stationIdentity, int stationId, string sn, out int lastStation)
+    {
+        lastStation = 0;
+
+        var stationLog = Log.ForContext("PlcIdentity", stationIdentity);
+
+        if (string.IsNullOrWhiteSpace(sn))
+        {
+            stationLog.Warning("S{Id} [SQL]: Missing SN to check", stationId);
+            return (int)PlcTaskStatus.SQLEmptyResultsDMC;
+        }
+
+        string sql5 = @"SELECT TOP 1
+                      Motor_Status as SN_Status,
+                      [Timestamp]
+                  FROM Station5Results
+                  WHERE Motor_SN = @Motor_SN
+                  ORDER BY [Timestamp] DESC";
+
+        string sql6 = @"SELECT TOP 1
+                      Motor_Status as SN_Status,
+                      [Timestamp]
+                  FROM Station6Results
+                  WHERE Motor_SN = @Motor_SN
+                  ORDER BY [Timestamp] DESC";
+
+        string sql7 = @"SELECT TOP 1
+                      Motor_Status as SN_Status,
+                      [Timestamp]
+                  FROM Station7Results
+                  WHERE Motor_SN = @Motor_SN
+                  ORDER BY [Timestamp] DESC";
+
+
+
+        try
+        {
+            using (IDbConnection connection = new SqlConnection(_connectionString))
+            {
+                var station5 = connection.QueryFirstOrDefault<SnCheckResult>(sql5, new { Motor_SN = sn });
+
+                var station6 = connection.QueryFirstOrDefault<SnCheckResult>(sql6, new { Motor_SN = sn });
+
+                var station7 = connection.QueryFirstOrDefault<SnCheckResult>(sql7, new { Motor_SN = sn });
+
+                // Brak wpisów w obu tabelach
+                if (station5 == null && station6 == null && station7 == null)
+                {
+                    stationLog.Debug("S{Id} [SQL]: no entry for SN {SN}", stationId, sn);
+
+                    return (int)PlcTaskStatus.PreviousPartNotFound;
+                }
+
+                SnCheckResult result;
+
+                if (station5 != null && (station6 == null || station5.Timestamp >= station6.Timestamp) && (station7 == null || station5.Timestamp >= station7.Timestamp))
+                {
+                    result = station5;
+                    lastStation = 5;
+                }
+                else if (station6 != null && (station7 == null || station6.Timestamp >= station7.Timestamp))
+                {
+                    result = station6;
+                    lastStation = 6;
+                }
+                else
+                {
+                    result = station7!;
+                    lastStation = 7;
+                }
+
+                stationLog.Debug("S{Id} [SQL]: SN {SN} found on station {LastStation} -> {Status}", stationId, sn, lastStation, result.SN_Status);
+                return result.SN_Status;
+            }
+        }
+        catch (SqlException ex)
+        {
+            stationLog.Error(ex, "S{Id} [SQL]: SQL error when checking SN", stationId);
+            return (int)PlcTaskStatus.SQLExecutionError;
+        }
+        catch (InvalidOperationException ex)
+        {
+            stationLog.Error(ex, "S{Id} [SQL]: connection error with DB", stationId);
+            return (int)PlcTaskStatus.SQLConnectionError;
+        }
+        catch (Exception ex)
+        {
+            stationLog.Error(ex, "S{Id} [SQL]: unknown error when checking SN", stationId);
+            return (int)PlcTaskStatus.SQLUnknownError;
+        }
+    }
+
+}

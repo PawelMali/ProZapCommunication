@@ -29,9 +29,13 @@ public interface IDatabaseRepository
     public int CheckRadiatorSnStatus(string stationIdentity, int stationId, string sn);
 
 
-    int ProcessRadiatorRework(string radiatorSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity);
-    int ProcessMotorRework(string motorSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity);
-    int ProcessMfsRework(string mfsSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity);
-    int ProcessMainSnRework(string mainSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity);
+    int ProcessRadiatorRework(string radiatorSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity, Station8ResultsData data);
+    int ProcessMotorRework(string motorSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity, Station8ResultsData data);
+    int ProcessMfsRework(string mfsSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity, Station8ResultsData data);
+    int ProcessMainSnRework(string mainSn, int reworkStatus, int reworkCode, int currentStationId, string stationIdentity, Station8ResultsData data);
+
+    int CheckRadiatorSnRework(string stationIdentity, int stationId, string sn, out int lastStation);
+    int CheckMfsSnRework(string stationIdentity, int stationId, string sn, out int lastStation);
+    int CheckMotorSnRework(string stationIdentity, int stationId, string sn, out int lastStation);
 
 }

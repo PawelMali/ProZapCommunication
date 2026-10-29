@@ -446,6 +446,7 @@ public class ExportService
     private static readonly ExportColumn<Station8Result>[] Station8Columns =
 {
         new("Timestamp", x => x.Timestamp),
+        new("Operator", x => x.Operator_ID),
         new("SN\\Motor", x => x.SN),
         new("SN\\Motor Status", x => x.SNStatusText),
         new("SN\\Motor Status Value", x => x.SN_Status),

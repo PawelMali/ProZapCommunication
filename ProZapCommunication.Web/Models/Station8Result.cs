@@ -10,6 +10,7 @@ public class Station8Result : StationResultBase
     public int Motor_Status { get; set; } = 0;
 
     public int ReworkCode { get; set; } = 0;
+    public string Operator_ID { get; set; } = string.Empty;
 
     // ====================================================================
     // WŁAŚCIWOŚCI OBLICZENIOWE DLA MUDDATAGRID (Ignorowane przez Dapper)

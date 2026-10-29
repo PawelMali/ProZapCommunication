@@ -261,6 +261,16 @@ public class LogixAsCommPlcProvider : IPlcProvider
         item.Write(rawData);
     }
 
+    public void WriteStation8Base(string tagName, Station8WriteBaseModel data)
+    {
+        // 1. Mapujemy czysty model Core na strukturę zapisu Logix
+        LogixStationWriteBase rawData = data.ToPlcStructure();
+
+        // 2. Zapisujemy do PLC
+        var item = GetOrAddItem(tagName);
+        item.Write(rawData);
+    }
+
     public Station1ResultsData ReadStation1ResultsData(string tagName)
     {
         var rawData = new LogixStation1ResultsData();
@@ -306,6 +316,13 @@ public class LogixAsCommPlcProvider : IPlcProvider
     public Station7ResultsData ReadStation7ResultsData(string tagName)
     {
         var rawData = new LogixStation7ResultsData();
+        ReadStructure(tagName, rawData);
+        return rawData.ToCoreModel();
+    }
+
+    public Station8ResultsData ReadStation8ResultsData(string tagName)
+    {
+        var rawData = new LogixStation8ResultsData();
         ReadStructure(tagName, rawData);
         return rawData.ToCoreModel();
     }

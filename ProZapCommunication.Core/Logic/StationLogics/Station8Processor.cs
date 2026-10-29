@@ -14,7 +14,7 @@ public class Station8Processor : StationProcessorBase
 
 
     public Station8Processor(int stationId, IDatabaseRepository db, IPlcProvider plc, string stationIdentity, string resultsTagName)
-                : base(stationId, db, plc, stationIdentity, new StationWriteBaseModel()) // Przekazujemy inteligentny interfejs PLC do bazy
+                : base(stationId, db, plc, stationIdentity, new Station8WriteBaseModel()) // Przekazujemy inteligentny interfejs PLC do bazy
     {
         _resultsTagName = resultsTagName;
     }
@@ -44,7 +44,11 @@ public class Station8Processor : StationProcessorBase
             case PlcTaskType.ReworkCheckRadiator: // --- REAKCJA NA TASK 10 ---
                 return HandleCheckRadiator();
 
+            case PlcTaskType.ReworkCheckMfs: // --- REAKCJA NA TASK 11 ---
+                return HandleCheckMFS();
 
+            case PlcTaskType.ReworkCheckMotor: // --- REAKCJA NA TASK 12 ---
+                return HandleCheckMotor();
 
 
             default:
@@ -62,10 +66,11 @@ public class Station8Processor : StationProcessorBase
         {
             string currentSn = reworkRead.DMC;
             int currentCode = reworkRead.Rework_Code;
+            int currentStatus = currentCode;
 
-            int currentStatus = (currentCode >= 3000 && currentCode <= 3999)
-                ? 300 + (currentCode - 3000) / 100
-                : currentCode;
+            //int currentStatus = (currentCode >= 3000 && currentCode <= 3999)
+            //    ? 300 + (currentCode - 3000) / 100
+            //    : currentCode;
 
             if (string.IsNullOrEmpty(currentSn))
             {
@@ -84,19 +89,29 @@ public class Station8Processor : StationProcessorBase
             Log.Information("S{Id} [TASK 5]: Get MAIN_SN form PLC {Sn}, Status: {Status}, Code: {Code}",
                 StationId, currentSn, currentStatus, currentCode);
 
-            // Wywołanie metody transakcyjnej z repozytorium SQL
-            var isDbSuccess = DbRepository.ProcessMainSnRework(currentSn, currentStatus, currentCode, StationId, StationIdentity);
+            try
+            {
+                Station8ResultsData results = Plc.ReadStation8ResultsData(_resultsTagName);
 
-            if (isDbSuccess == 1)
-            {
-                Log.Information("S{Id} [TASK 5]: Rework MAIN_SN {Sn} procedure completed successfully.", StationId, currentSn);
-                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.Success; // No Error
-                return true;
+                var isDbSuccess = DbRepository.ProcessMainSnRework(currentSn, currentStatus, currentCode, StationId, StationIdentity, results);
+
+                if (isDbSuccess == 1)
+                {
+                    Log.Information("S{Id} [TASK 5]: Rework MAIN_SN {Sn} procedure completed successfully.", StationId, currentSn);
+                    CurrentWriteState.TaskStatus = (short)PlcTaskStatus.Success; // No Error
+                    return true;
+                }
+                else
+                {
+                    Log.Error("S{Id} [TASK 5]: Sql error {ErrorCode}", StationId, isDbSuccess);
+                    CurrentWriteState.TaskStatus = isDbSuccess;
+                    return false;
+                }
             }
-            else
+            catch (System.Exception ex)
             {
-                Log.Error("S{Id} [TASK 5]: Sql error {ErrorCode}", StationId, isDbSuccess);
-                CurrentWriteState.TaskStatus = isDbSuccess;
+                Log.Error(ex, "S{Id} [TASK 5]: Error.", StationId);
+                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.GeneralError;
                 return false;
             }
         }
@@ -114,10 +129,11 @@ public class Station8Processor : StationProcessorBase
         {
             string currentSn = reworkRead.DMC;
             int currentCode = reworkRead.Rework_Code;
+            int currentStatus = currentCode;
 
-            int currentStatus = (currentCode >= 3000 && currentCode <= 3999)
-                ? 300 + (currentCode - 3000) / 100
-                : currentCode;
+            //int currentStatus = (currentCode >= 3000 && currentCode <= 3999)
+            //    ? 300 + (currentCode - 3000) / 100
+            //    : currentCode;
 
             if (string.IsNullOrEmpty(currentSn))
             {
@@ -136,18 +152,29 @@ public class Station8Processor : StationProcessorBase
             Log.Information("S{Id} [TASK 6]: Get MFS_SN form PLC {Sn}, Status: {Status}, Code: {Code}",
                 StationId, currentSn, currentStatus, currentCode);
 
-            // Wywołanie metody z interfejsu repozytorium SQL
-            var isDbSuccess = DbRepository.ProcessMfsRework(currentSn, currentStatus, currentCode, StationId, StationIdentity);
-            if (isDbSuccess == 1)
+            try
             {
-                Log.Information("S{Id} [TASK 6]: Rework MFS_SN {Sn} procedure completed successfully.", StationId, currentSn);
-                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.Success; // No Error
-                return true;
+                Station8ResultsData results = Plc.ReadStation8ResultsData(_resultsTagName);
+
+                // Wywołanie metody z interfejsu repozytorium SQL
+                var isDbSuccess = DbRepository.ProcessMfsRework(currentSn, currentStatus, currentCode, StationId, StationIdentity, results);
+                if (isDbSuccess == 1)
+                {
+                    Log.Information("S{Id} [TASK 6]: Rework MFS_SN {Sn} procedure completed successfully.", StationId, currentSn);
+                    CurrentWriteState.TaskStatus = (short)PlcTaskStatus.Success; // No Error
+                    return true;
+                }
+                else
+                {
+                    Log.Error("S{Id} [TASK 6]: Sql error {ErrorCode}", StationId, isDbSuccess);
+                    CurrentWriteState.TaskStatus = isDbSuccess;
+                    return false;
+                }
             }
-            else
+            catch (System.Exception ex)
             {
-                Log.Error("S{Id} [TASK 6]: Sql error {ErrorCode}", StationId, isDbSuccess);
-                CurrentWriteState.TaskStatus = isDbSuccess;
+                Log.Error(ex, "S{Id} [TASK 6]: Error.", StationId);
+                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.GeneralError;
                 return false;
             }
         }
@@ -164,11 +191,12 @@ public class Station8Processor : StationProcessorBase
         if (CurrentReadState is Station8ReadBaseModel reworkRead)
         {
             string currentSn = reworkRead.DMC;
-            int currentCode = reworkRead.Rework_Code; 
+            int currentCode = reworkRead.Rework_Code;
+            int currentStatus = currentCode;
 
-            int currentStatus = (currentCode >= 3000 && currentCode <= 3999)
-                ? 300 + (currentCode - 3000) / 100
-                : currentCode;
+            //int currentStatus = (currentCode >= 3000 && currentCode <= 3999)
+            //    ? 300 + (currentCode - 3000) / 100
+            //    : currentCode;
 
             if (string.IsNullOrEmpty(currentSn))
             {
@@ -187,19 +215,30 @@ public class Station8Processor : StationProcessorBase
             Log.Information("S{Id} [TASK 7]: Get Motor SN form PLC {Sn}, Status: {Status}, Code: {Code}",
                 StationId, currentSn, currentStatus, currentCode);
 
-            // Wywołanie naszej nowej metody z interfejsu repozytorium SQL
-            var isDbSuccess = DbRepository.ProcessMotorRework(currentSn, currentStatus, currentCode, StationId, StationIdentity);
+            try
+            {
+                Station8ResultsData results = Plc.ReadStation8ResultsData(_resultsTagName);
 
-            if (isDbSuccess == 1)
-            {
-                Log.Information("S{Id} [TASK 7]: Rework Motor SN {Sn} procedure completed successfully.", StationId, currentSn);
-                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.Success; // No Error
-                return true;
+                // Wywołanie naszej nowej metody z interfejsu repozytorium SQL
+                var isDbSuccess = DbRepository.ProcessMotorRework(currentSn, currentStatus, currentCode, StationId, StationIdentity, results);
+
+                if (isDbSuccess == 1)
+                {
+                    Log.Information("S{Id} [TASK 7]: Rework Motor SN {Sn} procedure completed successfully.", StationId, currentSn);
+                    CurrentWriteState.TaskStatus = (short)PlcTaskStatus.Success; // No Error
+                    return true;
+                }
+                else
+                {
+                    Log.Error("S{Id} [TASK 7]: Sql error {ErrorCode}", StationId, isDbSuccess);
+                    CurrentWriteState.TaskStatus = isDbSuccess;
+                    return false;
+                }
             }
-            else
+            catch (System.Exception ex)
             {
-                Log.Error("S{Id} [TASK 7]: Sql error {ErrorCode}", StationId, isDbSuccess);
-                CurrentWriteState.TaskStatus = isDbSuccess;
+                Log.Error(ex, "S{Id} [TASK 7]: Error.", StationId);
+                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.GeneralError;
                 return false;
             }
         }
@@ -218,10 +257,11 @@ public class Station8Processor : StationProcessorBase
         {
             string currentSn = reworkRead.DMC;
             int currentCode = reworkRead.Rework_Code; // Placeholder for rework code, can be extended if needed
+            int currentStatus = currentCode;
 
-            int currentStatus = (currentCode >= 3000 && currentCode <= 3999)
-                ? 300 + (currentCode - 3000) / 100
-                : currentCode;
+            //int currentStatus = (currentCode >= 3000 && currentCode <= 3999)
+            //    ? 300 + (currentCode - 3000) / 100
+            //    : currentCode;
 
 
 
@@ -243,19 +283,30 @@ public class Station8Processor : StationProcessorBase
             Log.Information("S{Id} [TASK 8]: Get Radiator SN form PLC {Sn}, Status: {Status}, Code: {Code}",
                 StationId, currentSn, currentStatus, currentCode);
 
-            // Wywołanie zaimplementowanej w Kroku 3 metody transakcyjnej z repozytorium bazy dany
-            int isDbSuccess = DbRepository.ProcessRadiatorRework(currentSn, currentStatus, currentCode, StationId, StationIdentity);
+            try
+            {
+                Station8ResultsData results = Plc.ReadStation8ResultsData(_resultsTagName);
 
-            if (isDbSuccess == 1)
-            {
-                Log.Information("S{Id} [TASK 8]: Rework Radiator SN {Sn} procedure completed successfully.", StationId, currentSn);
-                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.Success; // No Error
-                return true;
+                // Wywołanie zaimplementowanej w Kroku 3 metody transakcyjnej z repozytorium bazy dany
+                int isDbSuccess = DbRepository.ProcessRadiatorRework(currentSn, currentStatus, currentCode, StationId, StationIdentity, results);
+
+                if (isDbSuccess == 1)
+                {
+                    Log.Information("S{Id} [TASK 8]: Rework Radiator SN {Sn} procedure completed successfully.", StationId, currentSn);
+                    CurrentWriteState.TaskStatus = (short)PlcTaskStatus.Success; // No Error
+                    return true;
+                }
+                else
+                {
+                    Log.Error("S{Id} [TASK 8]: Sql error {ErrorCode}", StationId, isDbSuccess);
+                    CurrentWriteState.TaskStatus = isDbSuccess;
+                    return false;
+                }
             }
-            else
+            catch (System.Exception ex)
             {
-                Log.Error("S{Id} [TASK 8]: Sql error {ErrorCode}", StationId, isDbSuccess);
-                CurrentWriteState.TaskStatus = isDbSuccess; 
+                Log.Error(ex, "S{Id} [TASK 8]: Error.", StationId);
+                CurrentWriteState.TaskStatus = (short)PlcTaskStatus.GeneralError;
                 return false;
             }
         }
@@ -326,6 +377,17 @@ public class Station8Processor : StationProcessorBase
         }
     }
 
+    public void WriteBaseMenagment()
+    {
+        if (CurrentWriteState is Station8WriteBaseModel s8WriteBase)
+        {
+            if (CurrentWriteState.TaskConfirmToPLC == 0 && CurrentReadState.TaskSendToPc == 0)
+            {
+                s8WriteBase.LastStation = 0;
+            }
+        }
+    }
+
     private bool HandleCheckRadiator()
     {
         Log.Information("S{Id} [TASK 10]: Verifying Radiator SN code: {Dmc}", StationId, CurrentReadState.DMC);
@@ -334,9 +396,14 @@ public class Station8Processor : StationProcessorBase
 
         try
         {
-           // CurrentWriteState.TaskStatus = DbRepository.CheckSnCurrentStationStatus(out lastStation CurrentReadState.DMC);
+            CurrentWriteState.TaskStatus = DbRepository.CheckRadiatorSnRework(StationIdentity, StationId, CurrentReadState.DMC, out lastStation);
 
-            return CurrentWriteState.TaskStatus is 1 or >= 3100 and <= 3799;
+            if (CurrentWriteState is Station8WriteBaseModel s8WriteBase)
+            {
+                s8WriteBase.LastStation = lastStation;
+            }
+
+            return lastStation is > 0;
         }
         catch (System.Exception ex)
         {
@@ -345,4 +412,56 @@ public class Station8Processor : StationProcessorBase
             return false;
         }
     }
+
+    private bool HandleCheckMFS()
+    {
+        Log.Information("S{Id} [TASK 10]: Verifying MFS SN code: {Dmc}", StationId, CurrentReadState.DMC);
+
+        int lastStation = 0;
+
+        try
+        {
+            CurrentWriteState.TaskStatus = DbRepository.CheckMfsSnRework(StationIdentity, StationId, CurrentReadState.DMC, out lastStation);
+
+            if (CurrentWriteState is Station8WriteBaseModel s8WriteBase)
+            {
+                s8WriteBase.LastStation = lastStation;
+            }
+
+            return lastStation is > 0;
+        }
+        catch (System.Exception ex)
+        {
+            Log.Error(ex, "S{Id} [TASK 10]: Error.", StationId);
+            CurrentWriteState.TaskStatus = (short)PlcTaskStatus.GeneralError;
+            return false;
+        }
+    }
+
+    private bool HandleCheckMotor()
+    {
+        Log.Information("S{Id} [TASK 10]: Verifying Motor SN code: {Dmc}", StationId, CurrentReadState.DMC);
+
+        int lastStation = 0;
+
+        try
+        {
+            CurrentWriteState.TaskStatus = DbRepository.CheckMotorSnRework(StationIdentity, StationId, CurrentReadState.DMC, out lastStation);
+
+            if (CurrentWriteState is Station8WriteBaseModel s8WriteBase)
+            {
+                s8WriteBase.LastStation = lastStation;
+            }
+
+            return lastStation is > 0;
+        }
+        catch (System.Exception ex)
+        {
+            Log.Error(ex, "S{Id} [TASK 10]: Error.", StationId);
+            CurrentWriteState.TaskStatus = (short)PlcTaskStatus.GeneralError;
+            return false;
+        }
+    }
+
+
 }

@@ -15,6 +15,7 @@ public interface IPlcProvider
     void WriteBase(string tagName, StationWriteBaseModel data);
 
     void WriteStation7Base(string tagName, Station7WriteBaseModel data);
+    void WriteStation8Base(string tagName, Station8WriteBaseModel data);
 
     Station1ResultsData ReadStation1ResultsData(string tagName);
     Station2ResultsData ReadStation2ResultsData(string tagName);
@@ -23,6 +24,7 @@ public interface IPlcProvider
     Station5ResultsData ReadStation5ResultsData(string tagName);
     Station6ResultsData ReadStation6ResultsData(string tagName);
     Station7ResultsData ReadStation7ResultsData(string tagName);
+    Station8ResultsData ReadStation8ResultsData(string tagName);
 
 
     // Miejsce na kolejne metody dla innych stacji (np. testera szczelności)
